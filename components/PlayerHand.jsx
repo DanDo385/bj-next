@@ -1,3 +1,9 @@
+/**
+ * PlayerHand.jsx
+ * This component displays the player's current hand and its score.
+ * It also handles the display of split hands if applicable.
+ */
+
 import { useGameContext } from '../context/GameContext';
 import Card from './Card';
 

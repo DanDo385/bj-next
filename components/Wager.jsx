@@ -1,3 +1,10 @@
+/**
+ * Wager.jsx
+ * This component manages the player's wager and handles input validation.
+ * It provides a slider for selecting the wager amount and buttons for setting the wager to a random value or all-in.
+ * It also displays the current wager and total chips, and handles input validation for the wager.
+ */
+
 import { useState, useEffect } from 'react';
 import { STARTING_CHIPS, MIN_BET } from '../utils/constants';
 

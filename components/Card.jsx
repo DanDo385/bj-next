@@ -1,3 +1,9 @@
+/**
+ * Card.jsx
+ * This component displays a single card image.
+ * It uses Next.js Image component for optimized image loading.
+ */
+
 import Image from 'next/image';
 
 const Card = ({ card }) => {

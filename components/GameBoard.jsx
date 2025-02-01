@@ -1,3 +1,10 @@
+/**
+ * GameBoard.jsx
+ * This component manages the game board and handles the game logic.
+ * It provides a UI for the player to interact with the game, including betting, hitting, standing, doubling down, and splitting.
+ * It also displays the current game state, including the player's hand, dealer's hand, and game result.
+ */
+
 import { useGameContext } from '../context/GameContext';
 import DealerHand from './DealerHand';
 import PlayerHand from './PlayerHand';

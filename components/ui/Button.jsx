@@ -1,3 +1,9 @@
+/**
+ * Button.jsx
+ * This component provides a customizable button with different styles and states.
+ * It can be used for various actions in the game, such as betting, hitting, standing, etc.
+ */
+
 const Button = ({ onClick, disabled, children, variant = 'primary' }) => {
   const baseStyles = "px-4 py-2 rounded-lg font-medium transition-colors";
   const variants = {

@@ -1,3 +1,9 @@
+/**
+ * CardCount.jsx
+ * This component displays the current card count and true count.
+ * It uses the deck's count information to display the running and true counts.
+ */
+
 import { useGameContext } from '../context/GameContext';
 
 const CardCount = () => {
