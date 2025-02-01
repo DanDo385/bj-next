@@ -1,8 +1,16 @@
 import { useGameContext } from '../context/GameContext';
 import Card from './Card';
+import { calculateScore } from '../utils/score';
 
 const DealerHand = () => {
   const { dealerHand, dealerScore, isPlayerTurn } = useGameContext();
+
+  const getVisibleScore = () => {
+    if (!dealerHand || dealerHand.length === 0) return 0;
+    // Only calculate score for the visible cards (skip first card during player's turn)
+    const visibleCards = isPlayerTurn ? dealerHand.slice(1) : dealerHand;
+    return calculateScore(visibleCards);
+  };
 
   return (
     <div className="flex flex-col items-center space-y-4">
@@ -17,7 +25,7 @@ const DealerHand = () => {
         ))}
       </div>
       <div className="text-white text-lg">
-        Score: {isPlayerTurn ? '?' : dealerScore}
+        Score: {isPlayerTurn ? getVisibleScore() : dealerScore}
       </div>
     </div>
   );
