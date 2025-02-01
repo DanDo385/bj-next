@@ -8,7 +8,7 @@ const Wager = ({ onWagerChange }) => {
 
   useEffect(() => {
     // Update default wager when chips change
-    if (chips >= 10000) {
+    if (chips >= STARTING_CHIPS) {
       setWager(Math.floor(chips * 0.1));
     }
   }, [chips]);
