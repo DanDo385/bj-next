@@ -2,7 +2,7 @@ import { useGameContext } from '../context/GameContext';
 import Card from './Card';
 
 const DealerHand = () => {
-  const { dealerHand, isPlayerTurn } = useGameContext();
+  const { dealerHand, dealerScore, isPlayerTurn } = useGameContext();
 
   return (
     <div className="flex flex-col items-center space-y-4">
@@ -15,6 +15,9 @@ const DealerHand = () => {
             isDealer={true}
           />
         ))}
+      </div>
+      <div className="text-white text-lg">
+        Score: {isPlayerTurn ? '?' : dealerScore}
       </div>
     </div>
   );

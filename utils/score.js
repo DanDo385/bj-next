@@ -1,27 +1,26 @@
 // utils/score.js
 
 export const calculateScore = (hand) => {
-  // hand is an array of card objects
+  if (!hand || hand.length === 0) return 0;
+  
   let score = 0;
   let numAces = 0;
 
-  // First pass: count aces and add all other cards
   hand.forEach(card => {
-    // Convert card.value to a number, or use special logic for face cards/Aces
-    // For example:
-    if (['J', 'Q', 'K'].includes(card.value)) {
+    const value = card.split('-')[0]; // Extract value from "A-H.png" format
+    
+    if (['J', 'Q', 'K'].includes(value)) {
       score += 10;
-    } else if (card.value === 'A') {
+    } else if (value === 'A') {
       numAces += 1;
-      score += 11; // or adjust later if necessary
+      score += 11;
     } else {
-      score += parseInt(card.value, 10);
+      score += parseInt(value, 10);
     }
   });
 
-  // Second pass: adjust aces from 11 to 1 if score is over 21
   while (score > 21 && numAces > 0) {
-    score -= 10; // Change an ace from 11 to 1
+    score -= 10;
     numAces--;
   }
 

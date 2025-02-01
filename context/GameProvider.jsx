@@ -13,6 +13,8 @@ const GameProvider = ({ children }) => {
   const [isGameStarted, setIsGameStarted] = useState(false);
   const [isPlayerTurn, setIsPlayerTurn] = useState(true);
   const [gameStatus, setGameStatus] = useState('betting'); // betting, playing, dealer, finished
+  const [splitHands, setSplitHands] = useState([]);
+  const [currentHandIndex, setCurrentHandIndex] = useState(0);
 
   const playerScore = calculateScore(playerHand);
   const dealerScore = calculateScore(dealerHand);
@@ -82,9 +84,26 @@ const GameProvider = ({ children }) => {
   }, [deck, playerHand, currentWager, canDouble]);
 
   const split = useCallback(() => {
-    // Implement split logic here
-    console.log('Split not implemented yet');
-  }, []);
+    if (!canSplit) return;
+    
+    // Create two new hands from the split pair
+    const [card1, card2] = playerHand;
+    const hand1 = [card1, deck.drawCard()];
+    const hand2 = [card2, deck.drawCard()];
+    
+    // Deduct additional wager
+    setChips(prev => prev - currentWager);
+    
+    // Set up split hands state
+    setSplitHands([
+      { cards: hand1, wager: currentWager },
+      { cards: hand2, wager: currentWager }
+    ]);
+    
+    setCurrentHandIndex(0);
+    setPlayerHand(hand1);
+    setIsPlayerTurn(true);
+  }, [deck, playerHand, currentWager, canSplit]);
 
   const handleDealerTurn = useCallback((finalPlayerHand) => {
     const playerFinalScore = calculateScore(finalPlayerHand);
