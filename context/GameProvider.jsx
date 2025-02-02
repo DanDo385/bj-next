@@ -14,6 +14,14 @@ import { STARTING_CHIPS } from '../utils/constants';
  * @param {ReactNode} props.children - Child components that will have access to game context
  */
 const GameProvider = ({ children }) => {
+  // Helper function needs to be defined before it's used in canSplit
+  const getCardRank = (card) => {
+    if (!card) return '';
+    // Extract rank before the hyphen (e.g., "queen" from "queen-hearts")
+    const rank = card.split('-')[0];
+    return rank;
+  };
+
   // Core game state
   const [deck] = useState(() => createDeck()); // Initialize deck of cards
   const [playerHand, setPlayerHand] = useState([]); // Player's current cards
@@ -36,10 +44,26 @@ const GameProvider = ({ children }) => {
   const dealerScore = calculateScore(dealerHand);
 
   // Determine available actions
-  const canDouble = playerHand.length === 2 && chips >= currentWager * 2;
+  const canDoubleDown = splitHands.length > 0
+    ? splitHands[currentHandIndex]?.cards.length === 2 && chips >= splitHands[currentHandIndex].wager
+    : playerHand.length === 2 && chips >= currentWager;
   const canSplit = playerHand.length === 2 && 
-                   playerHand[0]?.split('-')[0] === playerHand[1]?.split('-')[0] && 
-                   chips >= currentWager * 2;
+                   getCardRank(playerHand[0]) === getCardRank(playerHand[1]) && 
+                   chips >= currentWager;
+
+  // Declare handleDealerTurn BEFORE it's used in other functions
+  const handleDealerTurn = useCallback(() => {
+    // Example dealer turn logic:
+    let dealerScore = calculateScore(dealerHand);
+    while (dealerScore < 17) {
+      const newCard = deck.drawCard();
+      // Update dealer hand (consider using a function updater for consistency)
+      setDealerHand(prev => [...prev, newCard]);
+      dealerScore = calculateScore([...dealerHand, newCard]);
+    }
+    setGameStatus('finished');
+    setIsPlayerTurn(false);
+  }, [dealerHand, deck]);
 
   /**
    * Deals initial cards to player and dealer at the start of a game
@@ -85,35 +109,69 @@ const GameProvider = ({ children }) => {
     dealInitialCards();
   }, [chips, deck, dealInitialCards]);
 
-  /**
-   * Handles player hitting (taking another card)
-   * Automatically ends player's turn if they bust
-   */
+  // Now define stand using handleDealerTurn
+  const stand = useCallback(() => {
+    if (splitHands.length > 0) {
+      // Mark the current split hand as played
+      setSplitHands(prevHands => {
+        const updatedHands = [...prevHands];
+        updatedHands[currentHandIndex] = {
+          ...updatedHands[currentHandIndex],
+          isPlayed: true
+        };
+        return updatedHands;
+      });
+      // Check if any split hand remains unplayed
+      const nextUnplayedIndex = splitHands.findIndex(hand => !hand.isPlayed);
+      if (nextUnplayedIndex !== -1) {
+        setCurrentHandIndex(nextUnplayedIndex);
+        return; // Continue player's turn with the next hand
+      }
+    }
+    setIsPlayerTurn(false);
+    handleDealerTurn(); // Now safe to call; handleDealerTurn is defined above
+  }, [splitHands, currentHandIndex, handleDealerTurn]);
+
+  // And a similar update for hit
   const hit = useCallback(() => {
     if (!isPlayerTurn) return;
-    
-    const newHand = [...playerHand, deck.drawCard()];
-    setPlayerHand(newHand);
-    
-    if (calculateScore(newHand) >= 21) {
-      setIsPlayerTurn(false);
-      handleDealerTurn(newHand);
-    }
-  }, [deck, playerHand, isPlayerTurn]);
 
-  /**
-   * Handles player standing (keeping current hand)
-   */
-  const stand = useCallback(() => {
-    setIsPlayerTurn(false);
-    handleDealerTurn(playerHand);
-  }, [playerHand]);
+    if (splitHands.length > 0) {
+      setSplitHands(prevHands => {
+        const updatedHands = [...prevHands];
+        const currentHand = updatedHands[currentHandIndex];
+        currentHand.cards.push(deck.drawCard());
+
+        const score = calculateScore(currentHand.cards);
+        if (score >= 21) {
+          currentHand.isPlayed = true;
+          const nextUnplayedIndex = updatedHands.findIndex(hand => !hand.isPlayed);
+          if (nextUnplayedIndex !== -1) {
+            setCurrentHandIndex(nextUnplayedIndex);
+          } else {
+            setIsPlayerTurn(false);
+            handleDealerTurn();
+          }
+        }
+        return updatedHands;
+      });
+    } else {
+      // Regular case (no splits)
+      const newCard = deck.drawCard();
+      setPlayerHand(prev => [...prev, newCard]);
+      const score = calculateScore([...playerHand, newCard]);
+      if (score >= 21) {
+        setIsPlayerTurn(false);
+        handleDealerTurn();
+      }
+    }
+  }, [isPlayerTurn, splitHands, currentHandIndex, deck, playerHand, handleDealerTurn]);
 
   /**
    * Handles player doubling down (doubling bet and taking one card)
    */
   const double = useCallback(() => {
-    if (!canDouble) return;
+    if (!canDoubleDown) return;
     
     setChips(prev => prev - currentWager);
     setCurrentWager(prev => prev * 2);
@@ -122,7 +180,7 @@ const GameProvider = ({ children }) => {
     setPlayerHand(newHand);
     setIsPlayerTurn(false);
     handleDealerTurn(newHand);
-  }, [deck, playerHand, currentWager, canDouble]);
+  }, [deck, playerHand, currentWager, canDoubleDown]);
 
   /**
    * Handles splitting pairs into two separate hands
@@ -164,40 +222,6 @@ const GameProvider = ({ children }) => {
     
     setGameStatus('playing');
   }, [canSplit, playerHand, currentWager, deck]);
-
-  /**
-   * Handles dealer's turn after player is finished
-   * Follows house rules (dealer must hit on 16 and below, stand on 17 and above)
-   * @param {Array} finalPlayerHand - Player's final hand to compare against
-   */
-  const handleDealerTurn = useCallback((finalPlayerHand) => {
-    const playerFinalScore = calculateScore(finalPlayerHand);
-    
-    if (playerFinalScore > 21) {
-      endGame('dealer', 'Dealer Wins - Player Bust!');
-      return;
-    }
-
-    let currentDealerHand = [...dealerHand];
-    let currentScore = calculateScore(currentDealerHand);
-
-    while (currentScore < 17) {
-      currentDealerHand.push(deck.drawCard());
-      currentScore = calculateScore(currentDealerHand);
-    }
-
-    setDealerHand(currentDealerHand);
-    
-    if (currentScore > 21) {
-      endGame('player', `You Win! Dealer Busts! (${currentScore})`);
-    } else if (playerFinalScore > currentScore) {
-      endGame('player', `You Win! (${playerFinalScore} vs ${currentScore})`);
-    } else if (currentScore > playerFinalScore) {
-      endGame('dealer', `Dealer Wins (${currentScore} vs ${playerFinalScore})`);
-    } else {
-      endGame('push', 'Push - It\'s a Tie!');
-    }
-  }, [deck, dealerHand]);
 
   /**
    * Handles end of game, including payouts and state reset
@@ -257,7 +281,7 @@ const GameProvider = ({ children }) => {
     isGameStarted,
     isPlayerTurn,
     gameStatus,
-    canDouble,
+    canDoubleDown,
     canSplit,
     startGame,
     hit,

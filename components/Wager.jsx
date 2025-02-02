@@ -8,18 +8,18 @@
 import { useState, useEffect } from 'react';
 import { STARTING_CHIPS, MIN_BET } from '../utils/constants';
 
-const Wager = ({ onWagerChange, initialWager, maxChips = STARTING_CHIPS, isDoubled }) => {
-  const [wager, setWager] = useState(initialWager || Math.min(10000, maxChips));
+const Wager = ({ onWagerChange, initialWager, currentChips = STARTING_CHIPS, isDoubled }) => {
+  const [wager, setWager] = useState(initialWager || Math.min(10000, currentChips));
   const [error, setError] = useState('');
-  const maxBet = maxChips || 0;
+  const maxBet = currentChips || 0;
 
   useEffect(() => {
     if (!initialWager) {
-      const defaultWager = Math.min(10000, maxChips);
+      const defaultWager = Math.min(10000, currentChips);
       setWager(defaultWager);
       onWagerChange(defaultWager);
     }
-  }, [maxChips, initialWager, onWagerChange]);
+  }, [currentChips, initialWager, onWagerChange]);
 
   const handleSliderChange = (e) => {
     const value = Number(e.target.value);
@@ -58,17 +58,17 @@ const Wager = ({ onWagerChange, initialWager, maxChips = STARTING_CHIPS, isDoubl
   };
 
   const handleAllIn = () => {
-    const allIn = maxChips || 0;
+    const allIn = currentChips || 0;
     setWager(allIn);
     onWagerChange(allIn);
     setError('');
   };
 
   return (
-    <div className="w-full max-w-md p-4 bg-gray-800 rounded-lg shadow-lg">
+    <div className="fixed top-4 left-4 w-80 p-4 bg-gray-800 rounded-lg shadow-lg z-50">
       <div className="text-center mb-4">
-        <h2 className="text-xl font-bold text-white">
-          Total Chips: {(maxChips || 0).toLocaleString()}
+        <h2 className="text-2xl font-bold text-white">
+          Total Chips: {currentChips.toLocaleString()}
           {isDoubled && <span className="text-yellow-400 ml-2">(Doubled)</span>}
         </h2>
       </div>

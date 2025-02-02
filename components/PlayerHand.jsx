@@ -21,7 +21,9 @@ const PlayerHand = () => {
     double,
     split,
     isPlayerTurn,
-    chips
+    chips,
+    canDoubleDown,
+    canSplit
   } = useGameContext();
 
   // If no split has occurred, wrap the single hand in an array.
@@ -51,15 +53,21 @@ const PlayerHand = () => {
     <div className="flex flex-col space-y-2">
       <Button onClick={() => hit(handIndex)}>Hit</Button>
       <Button onClick={() => stand(handIndex)}>Stand</Button>
-      <Button 
+      <Button
         onClick={() => double(handIndex)}
-        disabled={!canDoubleForHand(hands[handIndex])}
+        disabled={handIndex !== undefined ? 
+          !canDoubleForHand(hands[handIndex]) : 
+          !canDoubleDown
+        }
       >
         Double
       </Button>
-      <Button 
+      <Button
         onClick={() => split(handIndex)}
-        disabled={!canSplitHand(hands[handIndex])}
+        disabled={handIndex !== undefined ?
+          !canSplitHand(hands[handIndex]) :
+          !canSplit
+        }
       >
         Split
       </Button>
@@ -84,7 +92,11 @@ const PlayerHand = () => {
           )}
         </div>
       </div>
-      {isPlayerTurn && handIndex !== undefined && renderActionButtons(handIndex)}
+      {isPlayerTurn && (
+        renderActionButtons(
+          splitHands.length > 0 ? handIndex : undefined
+        )
+      )}
     </div>
   );
 

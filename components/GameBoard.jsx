@@ -18,7 +18,6 @@ const GameBoard = () => {
     isGameStarted,
     isPlayerTurn,
     canSplit,
-    canDouble,
     startGame,
     hit,
     stand,
@@ -38,13 +37,16 @@ const GameBoard = () => {
   const [selectedWager, setSelectedWager] = useState(MIN_BET);
   const [wagerError, setWagerError] = useState('');
 
+  // Determine the current hand based on splitHands.
   const playerHand = splitHands[currentHandIndex]?.cards ?? [];
 
+  // Modify the auto-end logic so it doesn't trigger when split hands exist.
   useEffect(() => {
-    if (isGameStarted && playerScore === 21) {
+    // Only auto-end if there's no split hand (or if you prefer, if you are on a single-hand game)
+    if (isGameStarted && playerScore === 21 && (!splitHands || splitHands.length === 0)) {
       endGame('player', 'Blackjack! You Win!');
     }
-  }, [isGameStarted, playerScore]);
+  }, [isGameStarted, playerScore, splitHands, endGame]);
 
   const handleStartGame = () => {
     if (selectedWager < MIN_BET) {
@@ -63,7 +65,7 @@ const GameBoard = () => {
     if (!isPlayerTurn || playerHand.length !== 2) return false;
     if (chips < currentWager) return false;
     
-    // If we're playing split hands
+    // If we're playing split hands, use the current hand's wager
     if (splitHands.length > 0) {
       const currentHand = splitHands[currentHandIndex];
       return currentHand.cards.length === 2 && chips >= currentHand.wager;
@@ -74,29 +76,34 @@ const GameBoard = () => {
 
   return (
     <div className="flex items-start space-x-8 p-8">
-      {/* Wager Section - Left Side */}
-      {!isGameStarted && (
-        <div className="flex-none w-80">
-          <Wager onWagerChange={setSelectedWager} initialWager={selectedWager} />
-          <div className="mt-4 space-y-2">
-            <Button onClick={handleStartGame} variant="primary" className="w-full">
-              Deal
-            </Button>
-            <Button onClick={saveGame} variant="secondary" className="w-full">
-              Continue Later...
-            </Button>
-            {wagerError && (
-              <div className="text-red-500 text-sm">{wagerError}</div>
-            )}
-          </div>
+      {/* Wager Section - Always visible */}
+      <div className="flex-none w-80">
+        <Wager 
+          onWagerChange={setSelectedWager} 
+          initialWager={selectedWager}
+          currentChips={chips}
+        />
+        <div className="mt-4 space-y-2">
+          <Button 
+            onClick={handleStartGame} 
+            variant="primary" 
+            className="w-full"
+            disabled={chips < MIN_BET}
+          >
+            Deal New Hand
+          </Button>
+          <Button onClick={saveGame} variant="secondary" className="w-full">
+            Continue Later...
+          </Button>
+          {wagerError && (
+            <div className="text-red-500 text-sm">{wagerError}</div>
+          )}
         </div>
-      )}
+      </div>
 
       {/* Game Board - Right Side */}
       <div className="flex-grow flex flex-col items-center space-y-8">
-        <div className="text-white text-xl mb-4">
-          Current Wager: {currentWager.toLocaleString()} chips | Chips: {chips.toLocaleString()} chips
-        </div>
+      
         
         {gameResult && (
           <div className="text-2xl font-bold text-yellow-400 mb-4 text-center">
@@ -106,30 +113,13 @@ const GameBoard = () => {
           </div>
         )}
         
-        {/* Show hands whenever there are cards, not just when game is started */}
+        {/* Display the dealer's hand and player's hand */}
         <DealerHand />
         <PlayerHand />
         
         {isPlayerTurn && splitHands.length > 0 && (
           <div className="text-yellow-400 text-xl mb-4">
-            Playing Hand {currentHandIndex + 1} of 2
-          </div>
-        )}
-        
-        {isPlayerTurn && (
-          <div className="space-y-4">
-            <div className="flex space-x-4">
-              <Button onClick={hit}>Hit</Button>
-              <Button onClick={stand}>Stand</Button>
-              <Button 
-                onClick={double} 
-                disabled={!canDoubleDown()}
-                className={!canDoubleDown() ? 'opacity-50 cursor-not-allowed' : ''}
-              >
-                Double Down
-              </Button>
-              <Button onClick={split} disabled={!canSplit}>Split</Button>
-            </div>
+            Playing Hand {currentHandIndex + 1} of {splitHands.length}
           </div>
         )}
       </div>
