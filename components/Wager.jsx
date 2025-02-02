@@ -8,7 +8,15 @@
 import { useState, useEffect } from 'react';
 import { STARTING_CHIPS, MIN_BET } from '../utils/constants';
 
-const Wager = ({ onWagerChange, initialWager, currentChips = STARTING_CHIPS, isDoubled }) => {
+const Wager = ({ 
+  onWagerChange, 
+  initialWager, 
+  currentChips = STARTING_CHIPS, 
+  isDoubled,
+  onDeal,
+  dealDisabled,
+  wagerError
+}) => {
   const [wager, setWager] = useState(initialWager || Math.min(10000, currentChips));
   const [error, setError] = useState('');
   const maxBet = currentChips || 0;
@@ -112,6 +120,22 @@ const Wager = ({ onWagerChange, initialWager, currentChips = STARTING_CHIPS, isD
           <span>Min: {MIN_BET.toLocaleString()}</span>
           <span>Max: {maxBet.toLocaleString()}</span>
         </div>
+
+        <button
+          onClick={onDeal}
+          disabled={dealDisabled}
+          className={`w-full py-2 rounded font-bold ${
+            dealDisabled 
+              ? 'bg-gray-600 text-gray-400' 
+              : 'bg-green-600 text-white hover:bg-green-700'
+          }`}
+        >
+          Deal
+        </button>
+
+        {wagerError && (
+          <div className="text-red-500 text-sm">{wagerError}</div>
+        )}
       </div>
     </div>
   );

@@ -14,7 +14,7 @@ import { STARTING_CHIPS } from '../utils/constants';
  * @param {ReactNode} props.children - Child components that will have access to game context
  */
 const GameProvider = ({ children }) => {
-  // Helper function needs to be defined before it's used in canSplit
+  // Helper functions
   const getCardRank = (card) => {
     if (!card) return '';
     // Extract rank before the hyphen (e.g., "queen" from "queen-hearts")
@@ -22,20 +22,16 @@ const GameProvider = ({ children }) => {
     return rank;
   };
 
-  // Core game state
-  const [deck] = useState(() => createDeck()); // Initialize deck of cards
-  const [playerHand, setPlayerHand] = useState([]); // Player's current cards
-  const [dealerHand, setDealerHand] = useState([]); // Dealer's current cards
-  const [currentWager, setCurrentWager] = useState(0); // Current bet amount
-  const [chips, setChips] = useState(STARTING_CHIPS); // Player's total chips
-  
-  // Game flow control state
+  // State declarations
+  const [deck] = useState(() => createDeck());
+  const [playerHand, setPlayerHand] = useState([]);
+  const [dealerHand, setDealerHand] = useState([]);
+  const [currentWager, setCurrentWager] = useState(0);
+  const [chips, setChips] = useState(STARTING_CHIPS);
   const [isGameStarted, setIsGameStarted] = useState(false);
   const [isPlayerTurn, setIsPlayerTurn] = useState(true);
-  const [gameStatus, setGameStatus] = useState('betting'); // betting, playing, dealer, finished
+  const [gameStatus, setGameStatus] = useState('betting');
   const [gameResult, setGameResult] = useState('');
-
-  // Initialize split-related state with default values
   const [splitHands, setSplitHands] = useState([]);
   const [currentHandIndex, setCurrentHandIndex] = useState(0);
 
@@ -101,6 +97,10 @@ const GameProvider = ({ children }) => {
     setCurrentWager(wager);
     setChips(prev => prev - wager);
     setIsGameStarted(true);
+    
+    // Clear split hands state
+    setSplitHands([]);
+    setCurrentHandIndex(0);
     
     if (deck.reshuffleIfNeeded()) {
       // Handle shuffle animation/notification if needed

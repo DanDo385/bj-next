@@ -75,36 +75,21 @@ const GameBoard = () => {
   }, [isPlayerTurn, playerHand, chips, currentWager, splitHands, currentHandIndex]);
 
   return (
-    <div className="flex items-start space-x-8 p-8">
-      {/* Wager Section - Always visible */}
-      <div className="flex-none w-80">
+    <div className="min-h-screen flex justify-center items-start p-8">
+      {/* Wager Section - Position fixed */}
+      <div className="fixed top-4 left-4">
         <Wager 
           onWagerChange={setSelectedWager} 
           initialWager={selectedWager}
           currentChips={chips}
+          onDeal={handleStartGame}
+          dealDisabled={chips < MIN_BET}
+          wagerError={wagerError}
         />
-        <div className="mt-4 space-y-2">
-          <Button 
-            onClick={handleStartGame} 
-            variant="primary" 
-            className="w-full"
-            disabled={chips < MIN_BET}
-          >
-            Deal New Hand
-          </Button>
-          <Button onClick={saveGame} variant="secondary" className="w-full">
-            Continue Later...
-          </Button>
-          {wagerError && (
-            <div className="text-red-500 text-sm">{wagerError}</div>
-          )}
-        </div>
       </div>
 
-      {/* Game Board - Right Side */}
-      <div className="flex-grow flex flex-col items-center space-y-8">
-      
-        
+      {/* Game Board - Centered */}
+      <div className="flex flex-col items-center space-y-8 max-w-4xl">
         {gameResult && (
           <div className="text-2xl font-bold text-yellow-400 mb-4 text-center">
             {gameResult.split('\n').map((line, index) => (
@@ -113,7 +98,6 @@ const GameBoard = () => {
           </div>
         )}
         
-        {/* Display the dealer's hand and player's hand */}
         <DealerHand />
         <PlayerHand />
         
