@@ -29,10 +29,12 @@ const GameBoard = () => {
     currentWager,
     chips,
     gameResult,
+    setGameResult,
     gameStatus,
-    splitHands,
+    splitHands = [],
     handleSplitWager,
-    currentHandIndex
+    currentHandIndex = 0,
+    endGame
   } = useGameContext();
 
   const [selectedWager, setSelectedWager] = useState(MIN_BET);
@@ -40,7 +42,7 @@ const GameBoard = () => {
   const [splitWager, setSplitWager] = useState(currentWager);
   const [splitWagerError, setSplitWagerError] = useState('');
 
-  const playerHand = splitHands[currentHandIndex]?.cards || [];
+  const playerHand = splitHands[currentHandIndex]?.cards ?? [];
 
   useEffect(() => {
     if (isGameStarted && playerScore === 21) {
@@ -57,6 +59,7 @@ const GameBoard = () => {
       setWagerError(`Maximum bet is ${chips.toLocaleString()} chips`);
       return;
     }
+    setGameResult(''); // Clear the previous game result
     startGame(selectedWager);
     setWagerError('');
   };
@@ -132,12 +135,14 @@ const GameBoard = () => {
       {/* Game Board - Right Side */}
       <div className="flex-grow flex flex-col items-center space-y-8">
         <div className="text-white text-xl mb-4">
-          Current Wager: ${currentWager.toLocaleString()} | Chips: ${chips.toLocaleString()}
+          Current Wager: {currentWager.toLocaleString()} chips | Chips: {chips.toLocaleString()} chips
         </div>
         
         {gameResult && (
-          <div className="text-2xl font-bold text-yellow-400 mb-4">
-            {gameResult}
+          <div className="text-2xl font-bold text-yellow-400 mb-4 text-center">
+            {gameResult.split('\n').map((line, index) => (
+              <div key={index}>{line}</div>
+            ))}
           </div>
         )}
         

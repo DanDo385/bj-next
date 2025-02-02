@@ -8,7 +8,13 @@ import { useGameContext } from '../context/GameContext';
 import Card from './Card';
 
 const PlayerHand = () => {
-  const { playerHand, playerScore, splitHands, currentHandIndex } = useGameContext();
+  const { 
+    playerHand, 
+    playerScore, 
+    splitHands, 
+    currentHandIndex,
+    currentWager
+  } = useGameContext();
 
   const renderHand = (cards, score, isDoubled, wager) => (
     <div className="flex flex-col items-center space-y-2">
@@ -47,6 +53,9 @@ const PlayerHand = () => {
       ) : (
         renderHand(playerHand, playerScore, false, currentWager)
       )}
+      <div className="text-white">
+        Your Hand ({playerScore}) - Wager: {currentWager?.toLocaleString()}
+      </div>
     </div>
   );
 };

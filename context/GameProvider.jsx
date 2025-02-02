@@ -27,7 +27,7 @@ const GameProvider = ({ children }) => {
   const [gameStatus, setGameStatus] = useState('betting'); // betting, playing, dealer, finished
   const [gameResult, setGameResult] = useState('');
 
-  // Split hands state
+  // Initialize split-related state with default values
   const [splitHands, setSplitHands] = useState([]);
   const [currentHandIndex, setCurrentHandIndex] = useState(0);
 
@@ -66,6 +66,11 @@ const GameProvider = ({ children }) => {
    * @param {number} wager - Amount of chips to bet
    */
   const startGame = useCallback((wager) => {
+    // Clear previous game state
+    setPlayerHand([]);
+    setDealerHand([]);
+    setGameResult('');
+    
     if (wager > chips) return;
     
     setCurrentWager(wager);
@@ -218,30 +223,35 @@ const GameProvider = ({ children }) => {
    */
   const endGame = useCallback((result, message) => {
     setGameStatus('finished');
-    setGameResult(message);
+    let chipChange = 0;
     
     switch (result) {
       case 'player':
-        setChips(prev => prev + currentWager * 2);
+        chipChange = currentWager * 2;
+        setChips(prev => prev + chipChange);
         break;
       case 'push':
-        setChips(prev => prev + currentWager);
+        chipChange = currentWager;
+        setChips(prev => prev + chipChange);
         break;
       case 'dealer':
-        // Player already lost their bet
+        chipChange = -currentWager;
         break;
     }
 
-    // Reset for next hand
-    setTimeout(() => {
-      setPlayerHand([]);
-      setDealerHand([]);
-      setCurrentWager(0);
-      setIsGameStarted(false);
-      setIsPlayerTurn(true);
-      setGameStatus('betting');
-      setGameResult('');
-    }, 2000);
+    const chipMessage = chipChange > 0 
+      ? `Won ${chipChange.toLocaleString()} chips` 
+      : chipChange < 0 
+      ? `Lost ${Math.abs(chipChange).toLocaleString()} chips`
+      : 'Chips returned';
+
+    setGameResult(`${message}\n${chipMessage}`);
+    
+    // Only update game state flags, don't clear hands
+    setCurrentWager(0);
+    setIsGameStarted(false);
+    setIsPlayerTurn(false);
+    setGameStatus('betting');
   }, [currentWager]);
 
   /**
@@ -274,6 +284,8 @@ const GameProvider = ({ children }) => {
     handleSplitWager,
     saveGame,
     gameResult,
+    setGameResult,
+    endGame,
   };
 
   return (

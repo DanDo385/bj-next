@@ -8,19 +8,18 @@
 import { useState, useEffect } from 'react';
 import { STARTING_CHIPS, MIN_BET } from '../utils/constants';
 
-const Wager = ({ onWagerChange, initialWager, maxChips, isDoubled }) => {
-  const [chips, setChips] = useState(STARTING_CHIPS);
-  const [wager, setWager] = useState(initialWager || Math.max(chips * 0.1, MIN_BET));
+const Wager = ({ onWagerChange, initialWager, maxChips = STARTING_CHIPS, isDoubled }) => {
+  const [wager, setWager] = useState(initialWager || Math.max((maxChips || 0) * 0.1, MIN_BET));
   const [error, setError] = useState('');
-  const maxBet = isDoubled ? Math.min(maxChips, initialWager) : maxChips;
+  const maxBet = isDoubled ? Math.min(maxChips, initialWager) : maxChips || 0;
 
   useEffect(() => {
-    // Update default wager when chips change
-    if (chips >= STARTING_CHIPS) {
-      setWager(Math.floor(chips * 0.1));
-      onWagerChange(Math.floor(chips * 0.1));
+    if (maxChips >= STARTING_CHIPS) {
+      const defaultWager = Math.floor((maxChips || 0) * 0.1);
+      setWager(defaultWager);
+      onWagerChange(defaultWager);
     }
-  }, [chips]);
+  }, [maxChips]);
 
   const handleSliderChange = (e) => {
     const value = Number(e.target.value);
@@ -59,8 +58,9 @@ const Wager = ({ onWagerChange, initialWager, maxChips, isDoubled }) => {
   };
 
   const handleAllIn = () => {
-    setWager(chips);
-    onWagerChange(chips);
+    const allIn = maxChips || 0;
+    setWager(allIn);
+    onWagerChange(allIn);
     setError('');
   };
 
@@ -68,7 +68,7 @@ const Wager = ({ onWagerChange, initialWager, maxChips, isDoubled }) => {
     <div className="w-full max-w-md p-4 bg-gray-800 rounded-lg shadow-lg">
       <div className="text-center mb-4">
         <h2 className="text-xl font-bold text-white">
-          Total Chips: {chips.toLocaleString()}
+          Total Chips: {(maxChips || 0).toLocaleString()}
           {isDoubled && <span className="text-yellow-400 ml-2">(Doubled)</span>}
         </h2>
       </div>
