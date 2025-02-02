@@ -9,7 +9,7 @@ import Card from './Card';
 import { calculateScore } from '../utils/score';
 
 const DealerHand = () => {
-  const { dealerHand, dealerScore, isPlayerTurn } = useGameContext();
+  const { dealerHand, dealerScore, isPlayerTurn, gameStatus } = useGameContext();
 
   const getVisibleScore = () => {
     if (!dealerHand || dealerHand.length === 0) return 0;
@@ -25,7 +25,7 @@ const DealerHand = () => {
         {dealerHand.map((card, index) => (
           <Card 
             key={index} 
-            card={isPlayerTurn && index === 0 ? 'BACK.png' : card} 
+            card={isPlayerTurn && gameStatus !== 'finished' && index === 0 ? 'BACK.png' : card} 
             isDealer={true}
           />
         ))}

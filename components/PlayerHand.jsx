@@ -6,6 +6,7 @@
 
 import { useGameContext } from '../context/GameContext';
 import Card from './Card';
+import { calculateScore } from '../utils/score';
 
 const PlayerHand = () => {
   const { 

@@ -9,17 +9,17 @@ import { useState, useEffect } from 'react';
 import { STARTING_CHIPS, MIN_BET } from '../utils/constants';
 
 const Wager = ({ onWagerChange, initialWager, maxChips = STARTING_CHIPS, isDoubled }) => {
-  const [wager, setWager] = useState(initialWager || Math.max((maxChips || 0) * 0.1, MIN_BET));
+  const [wager, setWager] = useState(initialWager || Math.min(10000, maxChips));
   const [error, setError] = useState('');
-  const maxBet = isDoubled ? Math.min(maxChips, initialWager) : maxChips || 0;
+  const maxBet = maxChips || 0;
 
   useEffect(() => {
-    if (maxChips >= STARTING_CHIPS) {
-      const defaultWager = Math.floor((maxChips || 0) * 0.1);
+    if (!initialWager) {
+      const defaultWager = Math.min(10000, maxChips);
       setWager(defaultWager);
       onWagerChange(defaultWager);
     }
-  }, [maxChips]);
+  }, [maxChips, initialWager, onWagerChange]);
 
   const handleSliderChange = (e) => {
     const value = Number(e.target.value);

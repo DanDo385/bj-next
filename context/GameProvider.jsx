@@ -46,10 +46,14 @@ const GameProvider = ({ children }) => {
    * Follows casino dealing sequence: player, dealer, player, dealer
    */
   const dealInitialCards = useCallback(() => {
+    // This is where we clear the previous hands
+    setPlayerHand([]);
+    setDealerHand([]);
+    
     const newPlayerHand = [];
     const newDealerHand = [];
-
-    // Deal in sequence: player, dealer, player, dealer (face down)
+    
+    // Deal initial cards
     newPlayerHand.push(deck.drawCard());
     newDealerHand.push(deck.drawCard());
     newPlayerHand.push(deck.drawCard());
@@ -66,9 +70,6 @@ const GameProvider = ({ children }) => {
    * @param {number} wager - Amount of chips to bet
    */
   const startGame = useCallback((wager) => {
-    // Clear previous game state
-    setPlayerHand([]);
-    setDealerHand([]);
     setGameResult('');
     
     if (wager > chips) return;
@@ -132,44 +133,27 @@ const GameProvider = ({ children }) => {
     // Create two new hands from the split pair
     const [card1, card2] = playerHand;
     
-    // Initialize first hand
+    // Initialize both hands with the same wager
     const hand1 = {
       cards: [card1],
       wager: currentWager,
       isPlayed: false
     };
     
-    // Initialize second hand (wager will be set when player confirms)
     const hand2 = {
       cards: [card2],
-      wager: 0,
+      wager: currentWager,
       isPlayed: false
     };
+    
+    // Deduct wager for second hand immediately
+    setChips(prev => prev - currentWager);
     
     // Set up split hands state
     setSplitHands([hand1, hand2]);
     setCurrentHandIndex(0);
-    setPlayerHand(hand1.cards);
-    setGameStatus('splitting'); // New status to handle split wager
-  }, [playerHand, currentWager, canSplit]);
-
-  /**
-   * Handles setting wager for split hand and dealing additional cards
-   * @param {number} wager - Amount to wager on split hand
-   */
-  const handleSplitWager = useCallback((wager) => {
-    if (wager > chips) return;
     
-    setSplitHands(prev => {
-      const updatedHands = [...prev];
-      updatedHands[1].wager = wager;
-      return updatedHands;
-    });
-    
-    // Deduct wager and deal cards to both hands
-    setChips(prev => prev - wager);
-    
-    // Deal one card to each split hand
+    // Deal one card to each split hand immediately
     setSplitHands(prev => {
       const updatedHands = prev.map(hand => ({
         ...hand,
@@ -179,8 +163,7 @@ const GameProvider = ({ children }) => {
     });
     
     setGameStatus('playing');
-    setIsPlayerTurn(true);
-  }, [chips, deck]);
+  }, [canSplit, playerHand, currentWager, deck]);
 
   /**
    * Handles dealer's turn after player is finished
@@ -281,11 +264,12 @@ const GameProvider = ({ children }) => {
     stand,
     double,
     split,
-    handleSplitWager,
     saveGame,
     gameResult,
     setGameResult,
     endGame,
+    splitHands,
+    currentHandIndex
   };
 
   return (

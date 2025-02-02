@@ -29,18 +29,14 @@ const GameBoard = () => {
     currentWager,
     chips,
     gameResult,
-    setGameResult,
     gameStatus,
     splitHands = [],
-    handleSplitWager,
     currentHandIndex = 0,
     endGame
   } = useGameContext();
 
   const [selectedWager, setSelectedWager] = useState(MIN_BET);
   const [wagerError, setWagerError] = useState('');
-  const [splitWager, setSplitWager] = useState(currentWager);
-  const [splitWagerError, setSplitWagerError] = useState('');
 
   const playerHand = splitHands[currentHandIndex]?.cards ?? [];
 
@@ -59,7 +55,6 @@ const GameBoard = () => {
       setWagerError(`Maximum bet is ${chips.toLocaleString()} chips`);
       return;
     }
-    setGameResult(''); // Clear the previous game result
     startGame(selectedWager);
     setWagerError('');
   };
@@ -76,41 +71,6 @@ const GameBoard = () => {
     
     return true;
   }, [isPlayerTurn, playerHand, chips, currentWager, splitHands, currentHandIndex]);
-
-  const renderSplitWagerUI = () => {
-    if (gameStatus !== 'splitting') return null;
-
-    return (
-      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-        <div className="bg-gray-800 p-6 rounded-lg shadow-xl">
-          <h2 className="text-xl text-white mb-4">Set Wager for Second Hand</h2>
-          <Wager 
-            onWagerChange={setSplitWager} 
-            initialWager={currentWager}
-            maxChips={chips}
-          />
-          <div className="mt-4 space-y-2">
-            <Button 
-              onClick={() => {
-                if (splitWager > chips) {
-                  setSplitWagerError("Insufficient chips");
-                  return;
-                }
-                handleSplitWager(splitWager);
-              }}
-              variant="primary"
-              className="w-full"
-            >
-              Confirm Split Wager
-            </Button>
-            {splitWagerError && (
-              <div className="text-red-500 text-sm">{splitWagerError}</div>
-            )}
-          </div>
-        </div>
-      </div>
-    );
-  };
 
   return (
     <div className="flex items-start space-x-8 p-8">
@@ -146,31 +106,33 @@ const GameBoard = () => {
           </div>
         )}
         
-        {isGameStarted && (
-          <>
-            <DealerHand />
-            <PlayerHand />
-            
-            {isPlayerTurn && (
-              <div className="space-y-4">
-                <div className="flex space-x-4">
-                  <Button onClick={hit}>Hit</Button>
-                  <Button onClick={stand}>Stand</Button>
-                  <Button 
-                    onClick={double} 
-                    disabled={!canDoubleDown()}
-                    className={!canDoubleDown() ? 'opacity-50 cursor-not-allowed' : ''}
-                  >
-                    Double Down
-                  </Button>
-                  <Button onClick={split} disabled={!canSplit}>Split</Button>
-                </div>
-              </div>
-            )}
-          </>
+        {/* Show hands whenever there are cards, not just when game is started */}
+        <DealerHand />
+        <PlayerHand />
+        
+        {isPlayerTurn && splitHands.length > 0 && (
+          <div className="text-yellow-400 text-xl mb-4">
+            Playing Hand {currentHandIndex + 1} of 2
+          </div>
+        )}
+        
+        {isPlayerTurn && (
+          <div className="space-y-4">
+            <div className="flex space-x-4">
+              <Button onClick={hit}>Hit</Button>
+              <Button onClick={stand}>Stand</Button>
+              <Button 
+                onClick={double} 
+                disabled={!canDoubleDown()}
+                className={!canDoubleDown() ? 'opacity-50 cursor-not-allowed' : ''}
+              >
+                Double Down
+              </Button>
+              <Button onClick={split} disabled={!canSplit}>Split</Button>
+            </div>
+          </div>
         )}
       </div>
-      {renderSplitWagerUI()}
     </div>
   );
 };
