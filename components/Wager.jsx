@@ -15,7 +15,9 @@ const Wager = ({
   isDoubled,
   onDeal,
   dealDisabled,
-  wagerError
+  wagerError,
+  gameStatus,
+  gameResult
 }) => {
   const [wager, setWager] = useState(initialWager || Math.min(10000, currentChips));
   const [error, setError] = useState('');
@@ -77,7 +79,6 @@ const Wager = ({
       <div className="text-center mb-4">
         <h2 className="text-2xl font-bold text-white">
           Total Chips: {currentChips.toLocaleString()}
-          {isDoubled && <span className="text-yellow-400 ml-2">(Doubled)</span>}
         </h2>
       </div>
       
@@ -133,8 +134,25 @@ const Wager = ({
           Deal
         </button>
 
+        {/* Display wager message or result */}
+        {gameStatus === 'playing' && (
+          <div className="mt-2 text-yellow-400 text-center">
+            You are wagering {wager.toLocaleString()} chips on this hand...
+          </div>
+        )}
+        
+        {gameResult && (
+          <div className="mt-2 text-center">
+            {gameResult.includes('Won') ? (
+              <span className="text-green-400">{gameResult}</span>
+            ) : (
+              <span className="text-red-400">{gameResult}</span>
+            )}
+          </div>
+        )}
+
         {wagerError && (
-          <div className="text-red-500 text-sm">{wagerError}</div>
+          <div className="text-red-500 text-sm mt-2">{wagerError}</div>
         )}
       </div>
     </div>

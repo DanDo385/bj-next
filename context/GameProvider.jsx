@@ -22,7 +22,7 @@ const GameProvider = ({ children }) => {
     return rank;
   };
 
-  // State declarations with initial placeholder cards
+  // State declarations
   const [deck] = useState(() => createDeck());
   const [playerHand, setPlayerHand] = useState(['BACK.png', 'BACK.png']);
   const [dealerHand, setDealerHand] = useState(['BACK.png']);
@@ -66,6 +66,7 @@ const GameProvider = ({ children }) => {
    * Follows casino dealing sequence: player, dealer, player, dealer
    */
   const dealInitialCards = useCallback(() => {
+    // Clear the placeholder cards first
     setPlayerHand([]);
     setDealerHand([]);
     
@@ -94,7 +95,6 @@ const GameProvider = ({ children }) => {
     if (wager > chips) return;
     
     setCurrentWager(wager);
-    setChips(prev => prev - wager);
     setIsGameStarted(true);
     
     // Clear split hands state
@@ -106,6 +106,9 @@ const GameProvider = ({ children }) => {
     }
     
     dealInitialCards();
+    // Deduct chips only after dealing
+    setChips(prev => prev - wager);
+    setGameStatus('playing');
   }, [chips, deck, dealInitialCards]);
 
   // Now define stand using handleDealerTurn
@@ -230,35 +233,45 @@ const GameProvider = ({ children }) => {
   const endGame = useCallback((result, message) => {
     setGameStatus('finished');
     let chipChange = 0;
+    let wagerAmount = currentWager;
+    
+    // If there are split hands, calculate total wagered amount
+    if (splitHands.length > 0) {
+      wagerAmount = splitHands.reduce((total, hand) => total + hand.wager, 0);
+    }
     
     switch (result) {
       case 'player':
-        chipChange = currentWager * 2;
+        if (message.includes('Blackjack')) {
+          chipChange = Math.floor(wagerAmount * 2.5); // Blackjack pays 3:2
+        } else {
+          chipChange = wagerAmount * 2; // Regular win pays 1:1
+        }
         setChips(prev => prev + chipChange);
         break;
       case 'push':
-        chipChange = currentWager;
+        chipChange = wagerAmount; // Return original wager
         setChips(prev => prev + chipChange);
         break;
       case 'dealer':
-        chipChange = -currentWager;
+        chipChange = -wagerAmount;
         break;
     }
 
     const chipMessage = chipChange > 0 
-      ? `Won ${chipChange.toLocaleString()} chips` 
+      ? `Won ${chipChange.toLocaleString()} chips!` 
       : chipChange < 0 
-      ? `Lost ${Math.abs(chipChange).toLocaleString()} chips`
-      : 'Chips returned';
+      ? `Lost ${Math.abs(chipChange).toLocaleString()} chips` 
+      : 'Push - Wager returned';
 
     setGameResult(`${message}\n${chipMessage}`);
     
-    // Only update game state flags, don't clear hands
+    // Reset game state
     setCurrentWager(0);
     setIsGameStarted(false);
     setIsPlayerTurn(false);
     setGameStatus('betting');
-  }, [currentWager]);
+  }, [currentWager, splitHands]);
 
   /**
    * Saves current game state (placeholder for future implementation)

@@ -88,7 +88,7 @@ const PlayerHand = () => {
           ))}
         </div>
         <div className="text-white text-lg space-y-1">
-          <div>Score: {score}</div>
+          <div>Score: {cards.includes('BACK.png') ? 0 : score}</div>
           {isDoubled && (
             <div className="text-yellow-400">
               Doubled Down! ({wager.toLocaleString()})
