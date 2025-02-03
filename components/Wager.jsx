@@ -134,19 +134,27 @@ const Wager = ({
           Deal
         </button>
 
-        {/* Display wager message or result */}
+        {/* Status Messages */}
         {gameStatus === 'playing' && (
           <div className="mt-2 text-yellow-400 text-center">
             You are wagering {wager.toLocaleString()} chips on this hand...
           </div>
         )}
         
-        {gameResult && (
+        {gameStatus === 'finished' && gameResult && (
           <div className="mt-2 text-center">
             {gameResult.includes('Won') ? (
-              <span className="text-green-400">{gameResult}</span>
+              <span className="text-green-400">
+                You won {wager.toLocaleString()} chips on this hand!
+              </span>
+            ) : gameResult.includes('Push') ? (
+              <span className="text-yellow-400">
+                Push - Your {wager.toLocaleString()} chips were returned
+              </span>
             ) : (
-              <span className="text-red-400">{gameResult}</span>
+              <span className="text-red-400">
+                You lost {wager.toLocaleString()} chips on this hand
+              </span>
             )}
           </div>
         )}

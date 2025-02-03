@@ -85,6 +85,8 @@ const GameBoard = () => {
           onDeal={handleStartGame}
           dealDisabled={chips < MIN_BET}
           wagerError={wagerError}
+          gameStatus={gameStatus}
+          gameResult={gameResult}
         />
       </div>
 
