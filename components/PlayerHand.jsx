@@ -23,7 +23,8 @@ const PlayerHand = () => {
     isPlayerTurn,
     chips,
     canDoubleDown,
-    canSplit
+    canSplit,
+    gameStatus
   } = useGameContext();
 
   // If no split has occurred, wrap the single hand in an array.
@@ -35,6 +36,9 @@ const PlayerHand = () => {
   // When there are no splits, treat the only hand as active (index 0)
   const activeHandIndex =
     splitHands && splitHands.length > 0 ? currentHandIndex : 0;
+
+  // If the hand contains BACK.png cards, disable all actions
+  const isPlaceholder = playerHand.includes('BACK.png');
 
   // Helpers for button disabling – note these now take a hand (object) instead of looking it up by index.
   const canDoubleForHand = (hand) => {
@@ -51,23 +55,23 @@ const PlayerHand = () => {
   // Renders the action buttons for a given hand index.
   const renderActionButtons = (handIndex) => (
     <div className="flex flex-col space-y-2">
-      <Button onClick={() => hit(handIndex)}>Hit</Button>
-      <Button onClick={() => stand(handIndex)}>Stand</Button>
+      <Button onClick={() => hit(handIndex)} disabled={isPlaceholder}>Hit</Button>
+      <Button onClick={() => stand(handIndex)} disabled={isPlaceholder}>Stand</Button>
       <Button
         onClick={() => double(handIndex)}
-        disabled={handIndex !== undefined ? 
+        disabled={isPlaceholder || (handIndex !== undefined ? 
           !canDoubleForHand(hands[handIndex]) : 
           !canDoubleDown
-        }
+        )}
       >
         Double
       </Button>
       <Button
         onClick={() => split(handIndex)}
-        disabled={handIndex !== undefined ?
+        disabled={isPlaceholder || (handIndex !== undefined ?
           !canSplitHand(hands[handIndex]) :
           !canSplit
-        }
+        )}
       >
         Split
       </Button>

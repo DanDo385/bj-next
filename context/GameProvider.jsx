@@ -22,10 +22,10 @@ const GameProvider = ({ children }) => {
     return rank;
   };
 
-  // State declarations
+  // State declarations with initial placeholder cards
   const [deck] = useState(() => createDeck());
-  const [playerHand, setPlayerHand] = useState([]);
-  const [dealerHand, setDealerHand] = useState([]);
+  const [playerHand, setPlayerHand] = useState(['BACK.png', 'BACK.png']);
+  const [dealerHand, setDealerHand] = useState(['BACK.png']);
   const [currentWager, setCurrentWager] = useState(0);
   const [chips, setChips] = useState(STARTING_CHIPS);
   const [isGameStarted, setIsGameStarted] = useState(false);
@@ -66,7 +66,6 @@ const GameProvider = ({ children }) => {
    * Follows casino dealing sequence: player, dealer, player, dealer
    */
   const dealInitialCards = useCallback(() => {
-    // This is where we clear the previous hands
     setPlayerHand([]);
     setDealerHand([]);
     

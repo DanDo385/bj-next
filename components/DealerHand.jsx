@@ -13,7 +13,7 @@ const DealerHand = () => {
 
   const getVisibleScore = () => {
     if (!dealerHand || dealerHand.length === 0) return 0;
-    // Only calculate score for the visible cards (skip first card during player's turn)
+    if (dealerHand[0] === 'BACK.png') return 0;
     const visibleCards = isPlayerTurn ? dealerHand.slice(1) : dealerHand;
     return calculateScore(visibleCards);
   };
@@ -25,7 +25,7 @@ const DealerHand = () => {
         {dealerHand.map((card, index) => (
           <Card 
             key={index} 
-            card={isPlayerTurn && gameStatus !== 'finished' && index === 0 ? 'BACK.png' : card} 
+            card={card}
             isDealer={true}
           />
         ))}
