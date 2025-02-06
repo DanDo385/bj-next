@@ -106,8 +106,6 @@ const GameProvider = ({ children }) => {
     }
     
     dealInitialCards();
-    // Deduct chips only after dealing
-    setChips(prev => prev - wager);
     setGameStatus('playing');
   }, [chips, deck, dealInitialCards]);
 
@@ -240,6 +238,11 @@ const GameProvider = ({ children }) => {
       wagerAmount = splitHands.reduce((total, hand) => total + hand.wager, 0);
     }
     
+    // Deduct the initial wager first (only for non-dealer wins)
+    if (result !== 'dealer') {
+      setChips(prev => prev - wagerAmount);
+    }
+    
     switch (result) {
       case 'player':
         if (message.includes('Blackjack')) {
@@ -255,11 +258,12 @@ const GameProvider = ({ children }) => {
         break;
       case 'dealer':
         chipChange = -wagerAmount;
+        setChips(prev => prev - wagerAmount); // Deduct wager for dealer win
         break;
     }
 
     const chipMessage = chipChange > 0 
-      ? `Won ${chipChange.toLocaleString()} chips!` 
+      ? `Won ${(chipChange - wagerAmount).toLocaleString()} chips!` 
       : chipChange < 0 
       ? `Lost ${Math.abs(chipChange).toLocaleString()} chips` 
       : 'Push - Wager returned';
