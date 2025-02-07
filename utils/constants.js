@@ -1,7 +1,8 @@
 // utils/constants.js
 
 export const STARTING_CHIPS = 100000;
-export const MIN_BET = 5000;
+export const MIN_BET = 1000;
+export const DEFAULT_BET = 5000;
 export const DECK_SIZE = 52;
 export const DECK_SHUFFLE_THRESHOLD = 0.8;
 

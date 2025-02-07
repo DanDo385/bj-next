@@ -5,8 +5,8 @@
  * It also displays the current wager and total chips, and handles input validation for the wager.
  */
 
-import { useState, useEffect } from 'react';
-import { STARTING_CHIPS, MIN_BET } from '../utils/constants';
+import { useState, useEffect, useCallback } from 'react';
+import { STARTING_CHIPS, MIN_BET, DEFAULT_BET } from '../utils/constants';
 
 const Wager = ({ 
   onWagerChange, 
@@ -19,17 +19,24 @@ const Wager = ({
   gameStatus,
   gameResult
 }) => {
-  const [wager, setWager] = useState(initialWager || Math.min(10000, currentChips));
+  const getDefaultWager = useCallback(() => {
+    if (currentChips >= 100000) {
+      return Math.floor(currentChips * 0.05); // 5% of total chips
+    }
+    return Math.min(DEFAULT_BET, currentChips);
+  }, [currentChips]);
+
+  const [wager, setWager] = useState(initialWager || getDefaultWager());
   const [error, setError] = useState('');
   const maxBet = currentChips || 0;
 
   useEffect(() => {
     if (!initialWager) {
-      const defaultWager = Math.min(10000, currentChips);
+      const defaultWager = getDefaultWager();
       setWager(defaultWager);
       onWagerChange(defaultWager);
     }
-  }, [currentChips, initialWager, onWagerChange]);
+  }, [currentChips, initialWager, onWagerChange, getDefaultWager]);
 
   const handleSliderChange = (e) => {
     const value = Number(e.target.value);

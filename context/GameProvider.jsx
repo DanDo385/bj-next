@@ -230,42 +230,56 @@ const GameProvider = ({ children }) => {
    */
   const endGame = useCallback((result, message) => {
     setGameStatus('finished');
-    let chipChange = 0;
-    let wagerAmount = currentWager;
+    let totalChipChange = 0;
     
-    // If there are split hands, calculate total wagered amount
     if (splitHands.length > 0) {
-      wagerAmount = splitHands.reduce((total, hand) => total + hand.wager, 0);
-    }
-    
-    // Deduct the initial wager first (only for non-dealer wins)
-    if (result !== 'dealer') {
-      setChips(prev => prev - wagerAmount);
-    }
-    
-    switch (result) {
-      case 'player':
-        if (message.includes('Blackjack')) {
-          chipChange = Math.floor(wagerAmount * 2.5); // Blackjack pays 3:2
+      // Handle each split hand independently
+      splitHands.forEach(hand => {
+        let handChipChange = 0;
+        const handWager = hand.wager;
+        
+        // Calculate result for this hand
+        if (result === 'player') {
+          if (message.includes('Blackjack')) {
+            handChipChange = Math.floor(handWager * 2.5); // Blackjack pays 3:2
+          } else {
+            handChipChange = handWager * 2; // Regular win pays 1:1
+          }
+        } else if (result === 'push') {
+          handChipChange = handWager; // Return original wager
         } else {
-          chipChange = wagerAmount * 2; // Regular win pays 1:1
+          handChipChange = 0; // Loss, wager already deducted
+        }
+        
+        totalChipChange += handChipChange;
+      });
+      
+      // Update chips with total change from all hands
+      setChips(prev => prev + totalChipChange);
+    } else {
+      // Single hand logic (unchanged)
+      let chipChange = 0;
+      if (result === 'player') {
+        if (message.includes('Blackjack')) {
+          chipChange = Math.floor(currentWager * 2.5);
+        } else {
+          chipChange = currentWager * 2;
         }
         setChips(prev => prev + chipChange);
-        break;
-      case 'push':
-        chipChange = wagerAmount; // Return original wager
+      } else if (result === 'push') {
+        chipChange = currentWager;
         setChips(prev => prev + chipChange);
-        break;
-      case 'dealer':
-        chipChange = -wagerAmount;
-        setChips(prev => prev - wagerAmount); // Deduct wager for dealer win
-        break;
+      } else {
+        chipChange = -currentWager;
+        setChips(prev => prev - currentWager);
+      }
+      totalChipChange = chipChange;
     }
 
-    const chipMessage = chipChange > 0 
-      ? `Won ${(chipChange - wagerAmount).toLocaleString()} chips!` 
-      : chipChange < 0 
-      ? `Lost ${Math.abs(chipChange).toLocaleString()} chips` 
+    const chipMessage = totalChipChange > 0 
+      ? `Won ${totalChipChange.toLocaleString()} chips!` 
+      : totalChipChange < 0 
+      ? `Lost ${Math.abs(totalChipChange).toLocaleString()} chips` 
       : 'Push - Wager returned';
 
     setGameResult(`${message}\n${chipMessage}`);
@@ -275,6 +289,8 @@ const GameProvider = ({ children }) => {
     setIsGameStarted(false);
     setIsPlayerTurn(false);
     setGameStatus('betting');
+    setSplitHands([]);
+    setCurrentHandIndex(0);
   }, [currentWager, splitHands]);
 
   /**
