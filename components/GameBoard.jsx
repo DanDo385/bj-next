@@ -8,24 +8,16 @@
 import { useGameContext } from '../context/GameContext';
 import DealerHand from './DealerHand';
 import PlayerHand from './PlayerHand';
-import Button from './ui/Button';
 import Wager from './Wager';
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { MIN_BET } from '../utils/constants';
 
 const GameBoard = () => {
   const { 
     isGameStarted,
     isPlayerTurn,
-    canSplit,
     startGame,
-    hit,
-    stand,
-    double,
-    split,
-    saveGame,
     playerScore,
-    currentWager,
     chips,
     gameResult,
     gameStatus,
@@ -37,12 +29,7 @@ const GameBoard = () => {
   const [selectedWager, setSelectedWager] = useState(MIN_BET);
   const [wagerError, setWagerError] = useState('');
 
-  // Determine the current hand based on splitHands.
-  const playerHand = splitHands[currentHandIndex]?.cards ?? [];
-
-  // Modify the auto-end logic so it doesn't trigger when split hands exist.
   useEffect(() => {
-    // Only auto-end if there's no split hand (or if you prefer, if you are on a single-hand game)
     if (isGameStarted && playerScore === 21 && (!splitHands || splitHands.length === 0)) {
       endGame('player', 'Blackjack! You Win!');
     }
@@ -61,22 +48,8 @@ const GameBoard = () => {
     setWagerError('');
   };
 
-  const canDoubleDown = useCallback(() => {
-    if (!isPlayerTurn || playerHand.length !== 2) return false;
-    if (chips < currentWager) return false;
-    
-    // If we're playing split hands, use the current hand's wager
-    if (splitHands.length > 0) {
-      const currentHand = splitHands[currentHandIndex];
-      return currentHand.cards.length === 2 && chips >= currentHand.wager;
-    }
-    
-    return true;
-  }, [isPlayerTurn, playerHand, chips, currentWager, splitHands, currentHandIndex]);
-
   return (
     <div className="min-h-screen flex justify-center items-start p-8">
-      {/* Wager Section - Position fixed */}
       <div className="fixed top-4 left-4">
         <Wager 
           onWagerChange={setSelectedWager} 
@@ -87,10 +60,11 @@ const GameBoard = () => {
           wagerError={wagerError}
           gameStatus={gameStatus}
           gameResult={gameResult}
+          splitHands={splitHands}
+          currentHandIndex={currentHandIndex}
         />
       </div>
 
-      {/* Game Board - Centered */}
       <div className="flex flex-col items-center space-y-8 max-w-4xl">
         {gameResult && (
           <div className="text-2xl font-bold text-yellow-400 mb-4 text-center">
