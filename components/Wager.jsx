@@ -17,7 +17,9 @@ const Wager = ({
   dealDisabled,
   wagerError,
   gameStatus,
-  gameResult
+  gameResult,
+  splitHands,
+  currentHandIndex
 }) => {
   const getDefaultWager = useCallback(() => {
     if (currentChips >= 100000) {
@@ -144,7 +146,16 @@ const Wager = ({
         {/* Status Messages */}
         {gameStatus === 'playing' && (
           <div className="mt-2 text-yellow-400 text-center">
-            You are wagering {wager.toLocaleString()} chips on this hand...
+            {splitHands.length > 0 ? (
+              <>
+                Hand {currentHandIndex + 1}: Wagering {splitHands[currentHandIndex].wager.toLocaleString()} chips
+                <div className="text-sm">
+                  Total at risk: {splitHands.reduce((total, hand) => total + hand.wager, 0).toLocaleString()} chips
+                </div>
+              </>
+            ) : (
+              `You are wagering ${wager.toLocaleString()} chips on this hand...`
+            )}
           </div>
         )}
         

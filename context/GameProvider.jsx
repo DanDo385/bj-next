@@ -94,6 +94,8 @@ const GameProvider = ({ children }) => {
     
     if (wager > chips) return;
     
+    // Deduct initial wager from chips
+    setChips(prev => prev - wager);
     setCurrentWager(wager);
     setIsGameStarted(true);
     
@@ -106,7 +108,6 @@ const GameProvider = ({ children }) => {
     }
     
     dealInitialCards();
-    setGameStatus('playing');
   }, [chips, deck, dealInitialCards]);
 
   // Now define stand using handleDealerTurn
@@ -171,16 +172,36 @@ const GameProvider = ({ children }) => {
    * Handles player doubling down (doubling bet and taking one card)
    */
   const double = useCallback(() => {
-    if (!canDoubleDown) return;
+    if (!isPlayerTurn || !canDoubleDown) return;
     
-    setChips(prev => prev - currentWager);
-    setCurrentWager(prev => prev * 2);
-    
-    const newHand = [...playerHand, deck.drawCard()];
-    setPlayerHand(newHand);
-    setIsPlayerTurn(false);
-    handleDealerTurn(newHand);
-  }, [deck, playerHand, currentWager, canDoubleDown]);
+    const currentHandWager = splitHands.length > 0 
+      ? splitHands[currentHandIndex].wager 
+      : currentWager;
+      
+    // Verify chips available and deduct additional wager
+    if (chips >= currentHandWager) {
+      setChips(prev => prev - currentHandWager);
+      
+      if (splitHands.length > 0) {
+        // Update split hand wager
+        setSplitHands(prev => {
+          const updated = [...prev];
+          updated[currentHandIndex] = {
+            ...updated[currentHandIndex],
+            wager: currentHandWager * 2,
+            isDoubled: true
+          };
+          return updated;
+        });
+      } else {
+        setCurrentWager(prev => prev * 2);
+      }
+      
+      // Deal one card and end turn
+      hit();
+      stand();
+    }
+  }, [isPlayerTurn, canDoubleDown, chips, currentWager, splitHands, currentHandIndex, hit, stand]);
 
   /**
    * Handles splitting pairs into two separate hands
@@ -188,30 +209,31 @@ const GameProvider = ({ children }) => {
   const split = useCallback(() => {
     if (!canSplit) return;
     
+    // Deduct wager for the new hand
+    setChips(prev => prev - currentWager);
+    
     // Create two new hands from the split pair
     const [card1, card2] = playerHand;
     
-    // Initialize both hands with the same wager
     const hand1 = {
       cards: [card1],
       wager: currentWager,
-      isPlayed: false
+      isPlayed: false,
+      isDoubled: false
     };
     
     const hand2 = {
       cards: [card2],
       wager: currentWager,
-      isPlayed: false
+      isPlayed: false,
+      isDoubled: false
     };
-    
-    // Deduct wager for second hand immediately
-    setChips(prev => prev - currentWager);
     
     // Set up split hands state
     setSplitHands([hand1, hand2]);
     setCurrentHandIndex(0);
     
-    // Deal one card to each split hand immediately
+    // Deal one card to each split hand
     setSplitHands(prev => {
       const updatedHands = prev.map(hand => ({
         ...hand,
@@ -221,7 +243,7 @@ const GameProvider = ({ children }) => {
     });
     
     setGameStatus('playing');
-  }, [canSplit, playerHand, currentWager, deck]);
+  }, [canSplit, playerHand, currentWager, chips, deck]);
 
   /**
    * Handles end of game, including payouts and state reset
