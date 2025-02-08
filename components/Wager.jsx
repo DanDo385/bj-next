@@ -84,7 +84,7 @@ const Wager = ({
   };
 
   return (
-    <div className="fixed top-4 left-4 w-80 p-4 bg-gray-800 rounded-lg shadow-lg z-50">
+    <div className="w-80 p-4 bg-gray-800 rounded-lg shadow-lg z-50">
       <div className="text-center mb-4">
         <h2 className="text-2xl font-bold text-white">
           Total Chips: {currentChips.toLocaleString()}
@@ -146,7 +146,7 @@ const Wager = ({
         {/* Status Messages */}
         {gameStatus === 'playing' && (
           <div className="mt-2 text-yellow-400 text-center">
-            {splitHands.length > 0 ? (
+            {splitHands && splitHands.length > 0 ? (
               <>
                 Hand {currentHandIndex + 1}: Wagering {splitHands[currentHandIndex].wager.toLocaleString()} chips
                 <div className="text-sm">
