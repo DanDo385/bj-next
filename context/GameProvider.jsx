@@ -47,19 +47,92 @@ const GameProvider = ({ children }) => {
                    getCardRank(playerHand[0]) === getCardRank(playerHand[1]) && 
                    chips >= currentWager;
 
-  // Declare handleDealerTurn BEFORE it's used in other functions
+  /**
+   * Handles end of game, including payouts and state reset
+   */
+  const endGame = useCallback((result, message) => {
+    setGameStatus('finished');
+    setGameResult(message);
+    let totalChipChange = 0;
+    
+    if (splitHands.length > 0) {
+      splitHands.forEach(hand => {
+        const handWager = hand.wager;
+        if (result === 'player') {
+          if (message.includes('Blackjack')) {
+            totalChipChange += Math.floor(handWager * 2.5);
+          } else {
+            totalChipChange += handWager * 2;
+          }
+        } else if (result === 'push') {
+          totalChipChange += handWager;
+        }
+      });
+    } else {
+      if (result === 'player') {
+        if (message.includes('Blackjack')) {
+          totalChipChange = Math.floor(currentWager * 2.5);
+        } else {
+          totalChipChange = currentWager * 2;
+        }
+      } else if (result === 'push') {
+        totalChipChange = currentWager;
+      }
+    }
+    
+    if (totalChipChange > 0) {
+      setChips(prev => prev + totalChipChange);
+    }
+    
+    setCurrentWager(0);
+    setIsGameStarted(false);
+    setIsPlayerTurn(false);
+    setGameStatus('betting');
+    setSplitHands([]);
+    setCurrentHandIndex(0);
+  }, [currentWager, splitHands]);
+
+  // Now define handleDealerTurn after endGame
   const handleDealerTurn = useCallback(() => {
-    // Example dealer turn logic:
     let dealerScore = calculateScore(dealerHand);
+    
     while (dealerScore < 17) {
       const newCard = deck.drawCard();
-      // Update dealer hand (consider using a function updater for consistency)
       setDealerHand(prev => [...prev, newCard]);
       dealerScore = calculateScore([...dealerHand, newCard]);
     }
-    setGameStatus('finished');
-    setIsPlayerTurn(false);
-  }, [dealerHand, deck]);
+
+    // Compare scores and determine winner
+    if (splitHands.length > 0) {
+      splitHands.forEach(hand => {
+        const handScore = calculateScore(hand.cards);
+        if (handScore > 21) {
+          endGame('dealer', 'Bust! Dealer Wins!');
+        } else if (dealerScore > 21) {
+          endGame('player', 'Dealer Busts! You Win!');
+        } else if (handScore > dealerScore) {
+          endGame('player', 'You Win!');
+        } else if (dealerScore > handScore) {
+          endGame('dealer', 'Dealer Wins!');
+        } else {
+          endGame('push', 'Push!');
+        }
+      });
+    } else {
+      const playerScore = calculateScore(playerHand);
+      if (playerScore > 21) {
+        endGame('dealer', 'Bust! Dealer Wins!');
+      } else if (dealerScore > 21) {
+        endGame('player', 'Dealer Busts! You Win!');
+      } else if (playerScore > dealerScore) {
+        endGame('player', 'You Win!');
+      } else if (dealerScore > playerScore) {
+        endGame('dealer', 'Dealer Wins!');
+      } else {
+        endGame('push', 'Push!');
+      }
+    }
+  }, [dealerHand, deck, playerHand, splitHands, endGame]);
 
   /**
    * Deals initial cards to player and dealer at the start of a game
@@ -248,55 +321,6 @@ const GameProvider = ({ children }) => {
     
     setGameStatus('playing');
   }, [canSplit, playerHand, currentWager, chips, deck]);
-
-  /**
-   * Handles end of game, including payouts and state reset
-   * @param {string} result - Game result ('player', 'dealer', or 'push')
-   * @param {string} message - Result message to display
-   */
-  const endGame = useCallback((result, message) => {
-    setGameStatus('finished');
-    setGameResult(message);
-    let totalChipChange = 0;
-    
-    if (splitHands.length > 0) {
-      splitHands.forEach(hand => {
-        const handWager = hand.wager;
-        if (result === 'player') {
-          if (message.includes('Blackjack')) {
-            totalChipChange += Math.floor(handWager * 2.5);
-          } else {
-            totalChipChange += handWager * 2;
-          }
-        } else if (result === 'push') {
-          totalChipChange += handWager;
-        }
-      });
-    } else {
-      if (result === 'player') {
-        if (message.includes('Blackjack')) {
-          totalChipChange = Math.floor(currentWager * 2.5);
-        } else {
-          totalChipChange = currentWager * 2;
-        }
-      } else if (result === 'push') {
-        totalChipChange = currentWager;
-      }
-    }
-    
-    // Always update chips when there's a change
-    if (totalChipChange > 0) {
-      setChips(prev => prev + totalChipChange);
-    }
-    
-    // Reset game state
-    setCurrentWager(0);
-    setIsGameStarted(false);
-    setIsPlayerTurn(false);
-    setGameStatus('betting');
-    setSplitHands([]);
-    setCurrentHandIndex(0);
-  }, [currentWager, splitHands]);
 
   /**
    * Saves current game state (placeholder for future implementation)
