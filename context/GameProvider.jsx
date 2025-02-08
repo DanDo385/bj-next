@@ -256,6 +256,7 @@ const GameProvider = ({ children }) => {
    */
   const endGame = useCallback((result, message) => {
     setGameStatus('finished');
+    setGameResult(message);
     let totalChipChange = 0;
     
     if (splitHands.length > 0) {
@@ -283,8 +284,9 @@ const GameProvider = ({ children }) => {
       }
     }
     
+    // Always update chips when there's a change
     if (totalChipChange > 0) {
-      updateChips(totalChipChange);
+      setChips(prev => prev + totalChipChange);
     }
     
     // Reset game state
@@ -294,7 +296,7 @@ const GameProvider = ({ children }) => {
     setGameStatus('betting');
     setSplitHands([]);
     setCurrentHandIndex(0);
-  }, [currentWager, splitHands, updateChips]);
+  }, [currentWager, splitHands]);
 
   /**
    * Saves current game state (placeholder for future implementation)
