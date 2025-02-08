@@ -94,7 +94,7 @@ const GameProvider = ({ children }) => {
     
     if (wager > chips) return;
     
-    // Deduct initial wager from chips
+    // Deduct initial wager from chips immediately
     setChips(prev => prev - wager);
     setCurrentWager(wager);
     setIsGameStarted(true);
@@ -109,6 +109,10 @@ const GameProvider = ({ children }) => {
     
     dealInitialCards();
   }, [chips, deck, dealInitialCards]);
+
+  const updateChips = useCallback((amount) => {
+    setChips(prev => prev + amount);
+  }, []);
 
   // Now define stand using handleDealerTurn
   const stand = useCallback(() => {
@@ -255,56 +259,33 @@ const GameProvider = ({ children }) => {
     let totalChipChange = 0;
     
     if (splitHands.length > 0) {
-      // Handle each split hand independently
       splitHands.forEach(hand => {
-        let handChipChange = 0;
         const handWager = hand.wager;
-        
-        // Calculate result for this hand
         if (result === 'player') {
           if (message.includes('Blackjack')) {
-            handChipChange = Math.floor(handWager * 2.5); // Blackjack pays 3:2
+            totalChipChange += Math.floor(handWager * 2.5);
           } else {
-            handChipChange = handWager * 2; // Regular win pays 1:1
+            totalChipChange += handWager * 2;
           }
         } else if (result === 'push') {
-          handChipChange = handWager; // Return original wager
-        } else {
-          handChipChange = 0; // Loss, wager already deducted
+          totalChipChange += handWager;
         }
-        
-        totalChipChange += handChipChange;
       });
-      
-      // Update chips with total change from all hands
-      setChips(prev => prev + totalChipChange);
     } else {
-      // Single hand logic (unchanged)
-      let chipChange = 0;
       if (result === 'player') {
         if (message.includes('Blackjack')) {
-          chipChange = Math.floor(currentWager * 2.5);
+          totalChipChange = Math.floor(currentWager * 2.5);
         } else {
-          chipChange = currentWager * 2;
+          totalChipChange = currentWager * 2;
         }
-        setChips(prev => prev + chipChange);
       } else if (result === 'push') {
-        chipChange = currentWager;
-        setChips(prev => prev + chipChange);
-      } else {
-        chipChange = -currentWager;
-        setChips(prev => prev - currentWager);
+        totalChipChange = currentWager;
       }
-      totalChipChange = chipChange;
     }
-
-    const chipMessage = totalChipChange > 0 
-      ? `Won ${totalChipChange.toLocaleString()} chips!` 
-      : totalChipChange < 0 
-      ? `Lost ${Math.abs(totalChipChange).toLocaleString()} chips` 
-      : 'Push - Wager returned';
-
-    setGameResult(`${message}\n${chipMessage}`);
+    
+    if (totalChipChange > 0) {
+      updateChips(totalChipChange);
+    }
     
     // Reset game state
     setCurrentWager(0);
@@ -313,7 +294,7 @@ const GameProvider = ({ children }) => {
     setGameStatus('betting');
     setSplitHands([]);
     setCurrentHandIndex(0);
-  }, [currentWager, splitHands]);
+  }, [currentWager, splitHands, updateChips]);
 
   /**
    * Saves current game state (placeholder for future implementation)
