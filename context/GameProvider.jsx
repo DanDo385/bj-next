@@ -7,6 +7,17 @@ import createDeck from '../utils/deck';
 import { calculateScore } from '../utils/score';
 import { STARTING_CHIPS } from '../utils/constants';
 
+// Helper function to compare scores and decide outcome.
+// Returns 'player' if the player wins, 'dealer' if the dealer wins,
+// or 'push' if the scores are equal.
+const determineWinner = (dealerScore, playerScore) => {
+  if (playerScore > 21) return 'dealer';
+  if (dealerScore > 21) return 'player';
+  if (playerScore > dealerScore) return 'player';
+  if (dealerScore > playerScore) return 'dealer';
+  return 'push';
+};
+
 /**
  * GameProvider component that manages the global state for the Blackjack game
  * Provides game state and functions to child components through Context API
@@ -92,47 +103,35 @@ const GameProvider = ({ children }) => {
     setCurrentHandIndex(0);
   }, [currentWager, splitHands]);
 
-  // Now define handleDealerTurn after endGame
+  // Updated handleDealerTurn now using determineWinner
   const handleDealerTurn = useCallback(() => {
-    let dealerScore = calculateScore(dealerHand);
-    
-    while (dealerScore < 17) {
-      const newCard = deck.drawCard();
-      setDealerHand(prev => [...prev, newCard]);
-      dealerScore = calculateScore([...dealerHand, newCard]);
-    }
+    // Clone the dealer's current hand.
+    let updatedDealerHand = [...dealerHand];
+    let dealerCurrentScore = calculateScore(updatedDealerHand);
 
-    // Compare scores and determine winner
-    if (splitHands.length > 0) {
-      splitHands.forEach(hand => {
-        const handScore = calculateScore(hand.cards);
-        if (handScore > 21) {
-          endGame('dealer', 'Bust! Dealer Wins!');
-        } else if (dealerScore > 21) {
-          endGame('player', 'Dealer Busts! You Win!');
-        } else if (handScore > dealerScore) {
-          endGame('player', 'You Win!');
-        } else if (dealerScore > handScore) {
-          endGame('dealer', 'Dealer Wins!');
-        } else {
-          endGame('push', 'Push!');
-        }
-      });
-    } else {
-      const playerScore = calculateScore(playerHand);
-      if (playerScore > 21) {
-        endGame('dealer', 'Bust! Dealer Wins!');
-      } else if (dealerScore > 21) {
-        endGame('player', 'Dealer Busts! You Win!');
-      } else if (playerScore > dealerScore) {
-        endGame('player', 'You Win!');
-      } else if (dealerScore > playerScore) {
-        endGame('dealer', 'Dealer Wins!');
-      } else {
-        endGame('push', 'Push!');
-      }
+    // Dealer hits until reaching at least 17 points.
+    while (dealerCurrentScore < 17) {
+      const newCard = deck.drawCard();
+      updatedDealerHand.push(newCard);
+      dealerCurrentScore = calculateScore(updatedDealerHand);
     }
-  }, [dealerHand, deck, playerHand, splitHands, endGame]);
+    
+    // Update dealer's hand.
+    setDealerHand(updatedDealerHand);
+
+    // Determine outcome.
+    if (dealerCurrentScore > 21) {
+      // Dealer busts; player wins.
+      endGame('player', 'Dealer busts! You win!');
+    } else {
+      const outcome = determineWinner(dealerCurrentScore, playerScore);
+      let message = '';
+      if (outcome === 'player') message = 'You win!';
+      else if (outcome === 'dealer') message = 'Dealer wins!';
+      else message = 'Push - Your wager is returned';
+      endGame(outcome, message);
+    }
+  }, [dealerHand, deck, playerScore, endGame]);
 
   /**
    * Deals initial cards to player and dealer at the start of a game
