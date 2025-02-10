@@ -11,19 +11,33 @@ import { calculateScore } from '../utils/score';
 
 const PlayerHand = () => {
   const { 
-    playerHand, 
-    playerScore, 
-    splitHands, 
+    // Current cards in the player's hand
+    playerHand,
+    // Current total score of player's hand 
+    playerScore,
+    // Array of split hands when player splits pairs
+    splitHands,
+    // Index of the currently active split hand (0 if no splits)
     currentHandIndex,
+    // Amount currently wagered on this hand
     currentWager,
+    // Action to draw another card
     hit,
+    // Action to end turn and let dealer play
     stand,
+    // Action to double wager and receive one card
     double,
+    // Action to split a pair into two hands
     split,
+    // Whether it's currently the player's turn
     isPlayerTurn,
+    // Player's total available chips
     chips,
+    // Whether player can double down on current hand
     canDoubleDown,
+    // Whether player can split current hand
     canSplit,
+    // Current state of the game ('betting', 'playing', 'finished')
     gameStatus
   } = useGameContext();
 
