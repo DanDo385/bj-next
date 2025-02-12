@@ -67,14 +67,15 @@ const GameProvider = ({ children }) => {
     setIsPlayerTurn(false);
     
     if (splitHands.length > 0) {
-      // For split hands, create a message for each hand
+      // For split hands, create a message for each hand including the cards
       const messages = splitHands.map((hand, index) => {
+        const cardList = hand.cards.join(', ').replace(/-/g, ' of ');
         if (winner === 'player') {
-          return `Hand ${index + 1}: You Won ${hand.wager.toLocaleString()} chips!`;
+          return `Hand ${index + 1} (${cardList}): You Won ${hand.wager.toLocaleString()} chips!`;
         } else if (winner === 'push') {
-          return `Hand ${index + 1}: Push - ${hand.wager.toLocaleString()} chips returned`;
+          return `Hand ${index + 1} (${cardList}): Push - ${hand.wager.toLocaleString()} chips returned`;
         } else {
-          return `Hand ${index + 1}: Lost ${hand.wager.toLocaleString()} chips`;
+          return `Hand ${index + 1} (${cardList}): Lost ${hand.wager.toLocaleString()} chips`;
         }
       });
       setGameResult(messages.join('\n'));
@@ -103,36 +104,42 @@ const GameProvider = ({ children }) => {
     setIsGameStarted(false);
     setSplitHands([]);
     setCurrentHandIndex(0);
-  }, [splitHands, setGameStatus, setIsPlayerTurn, setGameResult, currentWager, chips]);
+  }, [splitHands, currentWager, chips]);
 
   // Updated handleDealerTurn now using determineWinner
   const handleDealerTurn = useCallback(() => {
-    // Clone the dealer's current hand.
     let updatedDealerHand = [...dealerHand];
     let dealerCurrentScore = calculateScore(updatedDealerHand);
 
-    // Dealer hits until reaching at least 17 points.
-    while (dealerCurrentScore < 17) {
-      const newCard = deck.drawCard();
-      updatedDealerHand.push(newCard);
-      dealerCurrentScore = calculateScore(updatedDealerHand);
-    }
-    
-    // Update dealer's hand.
-    setDealerHand(updatedDealerHand);
+    const dealDealerCards = async () => {
+      const dealNextCard = () => {
+        if (dealerCurrentScore < 17) {
+          const newCard = deck.drawCard();
+          updatedDealerHand.push(newCard);
+          dealerCurrentScore = calculateScore(updatedDealerHand);
+          setDealerHand([...updatedDealerHand]);
 
-    // Determine outcome.
-    if (dealerCurrentScore > 21) {
-      // Dealer busts; player wins.
-      endGame('player', 'Dealer busts! You win!');
-    } else {
-      const outcome = determineWinner(dealerCurrentScore, playerScore);
-      let message = '';
-      if (outcome === 'player') message = 'You win!';
-      else if (outcome === 'dealer') message = 'Dealer wins!';
-      else message = 'Push - Your wager is returned';
-      endGame(outcome, message);
-    }
+          if (dealerCurrentScore < 17) {
+            setTimeout(dealNextCard, 2000);
+          } else {
+            // Determine final outcome
+            if (dealerCurrentScore > 21) {
+              endGame('player', 'Dealer busts! You win!');
+            } else {
+              const outcome = determineWinner(dealerCurrentScore, playerScore);
+              let message = '';
+              if (outcome === 'player') message = 'You win!';
+              else if (outcome === 'dealer') message = 'Dealer wins!';
+              else message = 'Push - Your wager is returned';
+              endGame(outcome, message);
+            }
+          }
+        }
+      };
+      dealNextCard();
+    };
+
+    dealDealerCards();
   }, [dealerHand, deck, playerScore, endGame]);
 
   /**
@@ -144,19 +151,34 @@ const GameProvider = ({ children }) => {
     setPlayerHand([]);
     setDealerHand([]);
     
-    const newPlayerHand = [];
-    const newDealerHand = [];
-    
-    // Deal initial cards
-    newPlayerHand.push(deck.drawCard());
-    newDealerHand.push(deck.drawCard());
-    newPlayerHand.push(deck.drawCard());
-    newDealerHand.push(deck.drawCard());
+    const dealSequence = async () => {
+      // First player card
+      const firstPlayerCard = deck.drawCard();
+      setPlayerHand([firstPlayerCard]);
+      
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      // First dealer card
+      const firstDealerCard = deck.drawCard();
+      setDealerHand([firstDealerCard]);
+      
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      // Second player card
+      const secondPlayerCard = deck.drawCard();
+      setPlayerHand(prev => [...prev, secondPlayerCard]);
+      
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      // Second dealer card
+      const secondDealerCard = deck.drawCard();
+      setDealerHand(prev => [...prev, secondDealerCard]);
+    };
 
-    setPlayerHand(newPlayerHand);
-    setDealerHand(newDealerHand);
-    setIsPlayerTurn(true);
-    setGameStatus('playing');
+    dealSequence().then(() => {
+      setIsPlayerTurn(true);
+      setGameStatus('playing');
+    });
   }, [deck]);
 
   /**
@@ -221,33 +243,40 @@ const GameProvider = ({ children }) => {
     if (!isPlayerTurn) return;
 
     if (splitHands.length > 0) {
-      setSplitHands(prevHands => {
-        const updatedHands = [...prevHands];
-        const currentHand = updatedHands[currentHandIndex];
-        currentHand.cards.push(deck.drawCard());
+      const dealCardWithDelay = async () => {
+        const newCard = deck.drawCard();
+        setSplitHands(prevHands => {
+          const updatedHands = [...prevHands];
+          const currentHand = updatedHands[currentHandIndex];
+          currentHand.cards.push(newCard);
 
-        const score = calculateScore(currentHand.cards);
-        if (score >= 21) {
-          currentHand.isPlayed = true;
-          const nextUnplayedIndex = updatedHands.findIndex(hand => !hand.isPlayed);
-          if (nextUnplayedIndex !== -1) {
-            setCurrentHandIndex(nextUnplayedIndex);
-          } else {
-            setIsPlayerTurn(false);
-            handleDealerTurn();
+          const score = calculateScore(currentHand.cards);
+          if (score >= 21) {
+            currentHand.isPlayed = true;
+            const nextUnplayedIndex = updatedHands.findIndex(hand => !hand.isPlayed);
+            if (nextUnplayedIndex !== -1) {
+              setCurrentHandIndex(nextUnplayedIndex);
+            } else {
+              setIsPlayerTurn(false);
+              setTimeout(() => handleDealerTurn(), 2000);
+            }
           }
-        }
-        return updatedHands;
-      });
+          return updatedHands;
+        });
+      };
+      dealCardWithDelay();
     } else {
       // Regular case (no splits)
-      const newCard = deck.drawCard();
-      setPlayerHand(prev => [...prev, newCard]);
-      const score = calculateScore([...playerHand, newCard]);
-      if (score >= 21) {
-        setIsPlayerTurn(false);
-        handleDealerTurn();
-      }
+      const dealCardWithDelay = async () => {
+        const newCard = deck.drawCard();
+        setPlayerHand(prev => [...prev, newCard]);
+        const score = calculateScore([...playerHand, newCard]);
+        if (score >= 21) {
+          setIsPlayerTurn(false);
+          setTimeout(() => handleDealerTurn(), 2000);
+        }
+      };
+      dealCardWithDelay();
     }
   }, [isPlayerTurn, splitHands, currentHandIndex, deck, playerHand, handleDealerTurn]);
 
@@ -316,17 +345,27 @@ const GameProvider = ({ children }) => {
     setSplitHands([hand1, hand2]);
     setCurrentHandIndex(0);
     
-    // Deal one card to each split hand
-    setSplitHands(prev => {
-      const updatedHands = prev.map(hand => ({
-        ...hand,
-        cards: [...hand.cards, deck.drawCard()]
-      }));
-      return updatedHands;
-    });
+    // Deal one card to each split hand with delay
+    const dealToSplitHands = async () => {
+      // Deal to first hand
+      setSplitHands(prev => {
+        const updatedHands = [...prev];
+        updatedHands[0].cards.push(deck.drawCard());
+        return updatedHands;
+      });
+      
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      // Deal to second hand
+      setSplitHands(prev => {
+        const updatedHands = [...prev];
+        updatedHands[1].cards.push(deck.drawCard());
+        return updatedHands;
+      });
+    };
     
-    setGameStatus('playing');
-  }, [canSplit, playerHand, currentWager, chips, deck]);
+    dealToSplitHands();
+  }, [canSplit, currentWager, playerHand, deck]);
 
   /**
    * Saves current game state (placeholder for future implementation)
