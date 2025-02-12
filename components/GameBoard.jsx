@@ -30,14 +30,6 @@ const GameBoard = () => {
   return (
     <div className="min-h-screen flex justify-center items-start p-8">
       <div className="flex flex-col items-center space-y-8 max-w-4xl">
-        {gameResult && (
-          <div className="text-2xl font-bold text-yellow-400 mb-4 text-center">
-            {gameResult.split('\n').map((line, index) => (
-              <div key={index}>{line}</div>
-            ))}
-          </div>
-        )}
-        
         <DealerHand />
         <PlayerHand />
         

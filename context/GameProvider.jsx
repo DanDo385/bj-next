@@ -61,34 +61,37 @@ const GameProvider = ({ children }) => {
   /**
    * Handles end of game, including payouts and state reset
    */
-  const endGame = useCallback((result, message) => {
+  const endGame = useCallback((winner, message) => {
     setGameStatus('finished');
-    setGameResult(message);
-    let totalChipChange = 0;
+    setIsPlayerTurn(false);
     
     if (splitHands.length > 0) {
-      splitHands.forEach(hand => {
-        const handWager = hand.wager;
-        if (result === 'player') {
-          if (message.includes('Blackjack')) {
-            totalChipChange += Math.floor(handWager * 2.5);
-          } else {
-            totalChipChange += handWager * 2;
-          }
-        } else if (result === 'push') {
-          totalChipChange += handWager;
+      // For split hands, create a message for each hand
+      const messages = splitHands.map((hand, index) => {
+        if (winner === 'player') {
+          return `Hand ${index + 1}: You Won ${hand.wager.toLocaleString()} chips!`;
+        } else if (winner === 'push') {
+          return `Hand ${index + 1}: Push - ${hand.wager.toLocaleString()} chips returned`;
+        } else {
+          return `Hand ${index + 1}: Lost ${hand.wager.toLocaleString()} chips`;
         }
       });
+      setGameResult(messages.join('\n'));
     } else {
-      if (result === 'player') {
-        if (message.includes('Blackjack')) {
-          totalChipChange = Math.floor(currentWager * 2.5);
-        } else {
-          totalChipChange = currentWager * 2;
-        }
-      } else if (result === 'push') {
-        totalChipChange = currentWager;
+      setGameResult(message);
+    }
+    
+    // Update chips based on game outcome
+    let totalChipChange = 0;
+    
+    if (winner === 'player') {
+      if (message.includes('Blackjack')) {
+        totalChipChange = Math.floor(currentWager * 2.5);
+      } else {
+        totalChipChange = currentWager * 2;
       }
+    } else if (winner === 'push') {
+      totalChipChange = currentWager;
     }
     
     if (totalChipChange > 0) {
@@ -97,11 +100,9 @@ const GameProvider = ({ children }) => {
     
     setCurrentWager(0);
     setIsGameStarted(false);
-    setIsPlayerTurn(false);
-    setGameStatus('betting');
     setSplitHands([]);
     setCurrentHandIndex(0);
-  }, [currentWager, splitHands]);
+  }, [splitHands, setGameStatus, setIsPlayerTurn, setGameResult, currentWager, chips]);
 
   // Updated handleDealerTurn now using determineWinner
   const handleDealerTurn = useCallback(() => {

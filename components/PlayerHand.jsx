@@ -38,7 +38,9 @@ const PlayerHand = () => {
     // Whether player can split current hand
     canSplit,
     // Current state of the game ('betting', 'playing', 'finished')
-    gameStatus
+    gameStatus,
+    // Game result message
+    gameResult
   } = useGameContext();
 
   // If no split has occurred, wrap the single hand in an array.
@@ -94,26 +96,51 @@ const PlayerHand = () => {
 
   // Renders a hand along with its cards, score, and action buttons.
   const renderHand = (cards, score, isDoubled, wager, handIndex) => (
-    <div className="flex items-start space-x-4">
-      <div className="flex flex-col items-center space-y-2">
-        <div className="flex space-x-2">
-          {cards.map((card, index) => (
-            <Card key={index} card={card} isDealer={false} />
-          ))}
+    <div className="flex items-start space-x-8">
+      <div className="flex items-start space-x-4">
+        <div className="flex flex-col items-center space-y-2">
+          <div className="flex space-x-2">
+            {cards.map((card, index) => (
+              <Card key={index} card={card} isDealer={false} />
+            ))}
+          </div>
+          <div className="text-white text-lg space-y-1">
+            <div>Score: {cards.includes('BACK.png') ? 0 : score}</div>
+            {isDoubled && (
+              <div className="text-yellow-400">
+                Doubled Down! ({wager.toLocaleString()})
+              </div>
+            )}
+          </div>
         </div>
-        <div className="text-white text-lg space-y-1">
-          <div>Score: {cards.includes('BACK.png') ? 0 : score}</div>
-          {isDoubled && (
-            <div className="text-yellow-400">
-              Doubled Down! ({wager.toLocaleString()})
+        {isPlayerTurn && (
+          renderActionButtons(
+            splitHands.length > 0 ? handIndex : undefined
+          )
+        )}
+      </div>
+      
+      {/* Result message for this hand */}
+      {gameStatus === 'finished' && gameResult && (
+        <div className="text-xl font-bold">
+          {splitHands.length > 0 ? (
+            <div className={`
+              ${gameResult.split('\n')[handIndex]?.includes('Won') ? 'text-green-400' : 
+                gameResult.split('\n')[handIndex]?.includes('Push') ? 'text-yellow-400' : 
+                'text-red-400'}
+            `}>
+              {gameResult.split('\n')[handIndex]}
+            </div>
+          ) : (
+            <div className={`
+              ${gameResult.includes('Won') ? 'text-green-400' : 
+                gameResult.includes('Push') ? 'text-yellow-400' : 
+                'text-red-400'}
+            `}>
+              {gameResult}
             </div>
           )}
         </div>
-      </div>
-      {isPlayerTurn && (
-        renderActionButtons(
-          splitHands.length > 0 ? handIndex : undefined
-        )
       )}
     </div>
   );
