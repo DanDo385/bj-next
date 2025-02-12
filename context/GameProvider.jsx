@@ -120,7 +120,7 @@ const GameProvider = ({ children }) => {
           setDealerHand([...updatedDealerHand]);
 
           if (dealerCurrentScore < 17) {
-            setTimeout(dealNextCard, 2000);
+            setTimeout(dealNextCard, 1000);
           } else {
             // Determine final outcome
             if (dealerCurrentScore > 21) {
@@ -156,19 +156,19 @@ const GameProvider = ({ children }) => {
       const firstPlayerCard = deck.drawCard();
       setPlayerHand([firstPlayerCard]);
       
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      await new Promise(resolve => setTimeout(resolve, 1000));
       
       // First dealer card
       const firstDealerCard = deck.drawCard();
       setDealerHand([firstDealerCard]);
       
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      await new Promise(resolve => setTimeout(resolve, 1000));
       
       // Second player card
       const secondPlayerCard = deck.drawCard();
       setPlayerHand(prev => [...prev, secondPlayerCard]);
       
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      await new Promise(resolve => setTimeout(resolve, 1000));
       
       // Second dealer card
       const secondDealerCard = deck.drawCard();
@@ -205,7 +205,7 @@ const GameProvider = ({ children }) => {
       setTimeout(() => {
         setShowReshuffle(false);
         dealInitialCards();
-      }, 2000);
+      }, 1000);
     } else {
       dealInitialCards();
     }
@@ -258,7 +258,7 @@ const GameProvider = ({ children }) => {
               setCurrentHandIndex(nextUnplayedIndex);
             } else {
               setIsPlayerTurn(false);
-              setTimeout(() => handleDealerTurn(), 2000);
+              setTimeout(() => handleDealerTurn(), 1000);
             }
           }
           return updatedHands;
@@ -273,7 +273,7 @@ const GameProvider = ({ children }) => {
         const score = calculateScore([...playerHand, newCard]);
         if (score >= 21) {
           setIsPlayerTurn(false);
-          setTimeout(() => handleDealerTurn(), 2000);
+          setTimeout(() => handleDealerTurn(), 1000);
         }
       };
       dealCardWithDelay();
@@ -354,7 +354,7 @@ const GameProvider = ({ children }) => {
         return updatedHands;
       });
       
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      await new Promise(resolve => setTimeout(resolve, 1000));
       
       // Deal to second hand
       setSplitHands(prev => {
