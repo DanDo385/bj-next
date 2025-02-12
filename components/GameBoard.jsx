@@ -18,7 +18,8 @@ const GameBoard = () => {
     gameResult,
     splitHands = [],
     currentHandIndex = 0,
-    endGame
+    endGame,
+    showReshuffle
   } = useGameContext();
 
   useEffect(() => {
@@ -30,6 +31,12 @@ const GameBoard = () => {
   return (
     <div className="min-h-screen flex justify-center items-start p-8">
       <div className="flex flex-col items-center space-y-8 max-w-4xl">
+        {showReshuffle && (
+          <div className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 
+                        bg-black bg-opacity-75 text-white text-2xl p-6 rounded-lg z-50">
+            Reshuffling Deck...
+          </div>
+        )}
         <DealerHand />
         <PlayerHand />
         

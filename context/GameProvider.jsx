@@ -15,7 +15,7 @@ const determineWinner = (dealerScore, playerScore) => {
   if (dealerScore > 21) return 'player';
   if (playerScore > dealerScore) return 'player';
   if (dealerScore > playerScore) return 'dealer';
-  return 'push';
+  return 'push';  // Equal scores result in a push, regardless of double down
 };
 
 /**
@@ -45,6 +45,7 @@ const GameProvider = ({ children }) => {
   const [gameResult, setGameResult] = useState('');
   const [splitHands, setSplitHands] = useState([]);
   const [currentHandIndex, setCurrentHandIndex] = useState(0);
+  const [showReshuffle, setShowReshuffle] = useState(false);
 
   // Calculate current scores
   const playerScore = calculateScore(playerHand);
@@ -177,10 +178,15 @@ const GameProvider = ({ children }) => {
     setCurrentHandIndex(0);
     
     if (deck.reshuffleIfNeeded()) {
-      // Handle shuffle animation/notification if needed
+      setShowReshuffle(true);
+      // Hide the message after 2 seconds
+      setTimeout(() => {
+        setShowReshuffle(false);
+        dealInitialCards();
+      }, 2000);
+    } else {
+      dealInitialCards();
     }
-    
-    dealInitialCards();
   }, [chips, deck, dealInitialCards]);
 
   const updateChips = useCallback((amount) => {
@@ -354,7 +360,8 @@ const GameProvider = ({ children }) => {
     setGameResult,
     endGame,
     splitHands,
-    currentHandIndex
+    currentHandIndex,
+    showReshuffle
   };
 
   return (
