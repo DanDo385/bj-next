@@ -324,40 +324,63 @@ const GameProvider = ({ children }) => {
     // Deduct wager for the new hand
     setChips(prev => prev - currentWager);
     
-    // Create two new hands from the split pair
-    const [card1, card2] = playerHand;
+    // If this is a first split
+    if (splitHands.length === 0) {
+      // Create two new hands from the split pair
+      const [card1, card2] = playerHand;
+      
+      const hand1 = {
+        cards: [card1],
+        wager: currentWager,
+        isPlayed: false,
+        isDoubled: false
+      };
+      
+      const hand2 = {
+        cards: [card2],
+        wager: currentWager,
+        isPlayed: false,
+        isDoubled: false
+      };
+      
+      // Set up split hands state
+      setSplitHands([hand1, hand2]);
+    } else {
+      // This is a subsequent split
+      const currentHand = splitHands[currentHandIndex];
+      const [card1, card2] = currentHand.cards;
+      
+      const newHand1 = {
+        cards: [card1],
+        wager: currentWager,
+        isPlayed: false,
+        isDoubled: false
+      };
+      
+      const newHand2 = {
+        cards: [card2],
+        wager: currentWager,
+        isPlayed: false,
+        isDoubled: false
+      };
+      
+      // Replace current hand with first new hand and add second new hand
+      setSplitHands(prev => {
+        const updated = [...prev];
+        updated[currentHandIndex] = newHand1;
+        updated.splice(currentHandIndex + 1, 0, newHand2);
+        return updated;
+      });
+    }
     
-    const hand1 = {
-      cards: [card1],
-      wager: currentWager,
-      isPlayed: false,
-      isDoubled: false
-    };
+    setCurrentHandIndex(currentHandIndex);
     
-    const hand2 = {
-      cards: [card2],
-      wager: currentWager,
-      isPlayed: false,
-      isDoubled: false
-    };
-
-    const hand3 = {
-      cards: [card2],
-      wager: currentWager,
-      isPlayed: false,
-      isDoubled: false
-    };
-    
-    // Set up split hands state
-    setSplitHands([hand1, hand2]);
-    setCurrentHandIndex(0);
-    
-    // Deal one card to each split hand with delay
+    // Deal one card to each new hand with delay
     const dealToSplitHands = async () => {
       // Deal to first hand
       setSplitHands(prev => {
         const updatedHands = [...prev];
-        updatedHands[0].cards.push(deck.drawCard());
+        updatedHands[currentHandIndex].cards.push(deck.drawCard());
         return updatedHands;
       });
       
@@ -366,13 +389,13 @@ const GameProvider = ({ children }) => {
       // Deal to second hand
       setSplitHands(prev => {
         const updatedHands = [...prev];
-        updatedHands[1].cards.push(deck.drawCard());
+        updatedHands[currentHandIndex + 1].cards.push(deck.drawCard());
         return updatedHands;
       });
     };
     
     dealToSplitHands();
-  }, [canSplit, currentWager, playerHand, deck]);
+  }, [canSplit, currentWager, playerHand, splitHands, currentHandIndex, deck]);
 
   /**
    * Saves current game state (placeholder for future implementation)
