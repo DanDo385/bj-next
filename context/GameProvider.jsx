@@ -340,6 +340,13 @@ const GameProvider = ({ children }) => {
       isPlayed: false,
       isDoubled: false
     };
+
+    const hand3 = {
+      cards: [card2],
+      wager: currentWager,
+      isPlayed: false,
+      isDoubled: false
+    };
     
     // Set up split hands state
     setSplitHands([hand1, hand2]);
